@@ -29,3 +29,6 @@
 | winner_name    | VARCHAR(50) (FK to players.player_name) | Who won                              |
 | timestamp      | DATETIME                      | When the match started                   |
 | status         | INTEGER                       | (0 for in-game, 1 for ended) Match Status|
+
+
+ecvwdcvdcwdcv

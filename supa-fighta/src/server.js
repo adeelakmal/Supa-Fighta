@@ -1,1 +1,3 @@
-// Initialize a server here for websockets 
+const setupWebSocketServer = require('./wsServer');
+
+setupWebSocketServer(8080);

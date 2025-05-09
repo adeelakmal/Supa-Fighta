@@ -1,22 +1,36 @@
 // Initialize a server here for websockets 
 const WebSocket = require('ws');
-const pool = require('./config/db')
-const { HandleMessage, HandleClose } = require('./controllers/lobbyController');
-
+const crypto = require('crypto');
+const pool = require('./config/db');
+const { HandleMessage, HandleClose, MatchmakePlayers } = require('./controllers/lobbyController');
+const Player = require('./models/playerModel'); // Import the Player class
 
 const setupWebSocketServer = (port) => {
-const wss = new WebSocket.Server({ port: port });
+  const wss = new WebSocket.Server({ port: port });
+
   wss.on('connection', async (ws) => {
-    ws.id = crypto.randomUUID();
-    console.log(`A new player - ${ws.id} has joined the lobby`);
-    let result = await pool.query(`INSERT INTO public."Players" (id) VALUES ($1) RETURNING *`, [ws.id])
-    console.log("Player inserted into db:", result)
-    
-    ws.on('message', message => HandleMessage(ws, message))
-    ws.on('close', () => HandleClose(ws));
-  
-  })
+      ws.id = crypto.randomUUID();
+
+      // Create a Player instance
+      const player = new Player(ws, "player");
+
+      // Insert the player into the database
+      let result = await pool.query(`
+          INSERT INTO players (player_id, player_name, status)
+          VALUES ($1, $2, 0)
+          RETURNING *
+      `, [player.id, player.username]);
+
+      // Pass the Player instance to the handlers
+      ws.on('message', message => HandleMessage(player, message));
+      ws.on('close', () => HandleClose(player));
+  });
+
+  // Periodically run matchmaking
+  setInterval(() => {
+      MatchmakePlayers();
+  }, 5000); // Run matchmaking every 5 seconds
   console.log('WebSocket server is listening on ws://localhost:8080');
-}
+};
 
 module.exports = setupWebSocketServer;

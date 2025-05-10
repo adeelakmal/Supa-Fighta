@@ -3,34 +3,32 @@ const { broadcastToLobby } = require("../utils/lobbyUtils");
 
 const LOBBY = { players: [] };
 
-const HandleMessage = (ws, msg) => {
+const HandleMessage = (player, msg) => {
+    // Hanldes broadcasting messages for players joining the lobby
     let data;
     try {
         data = JSON.parse(msg);
     } catch {
-        return ws.send(JSON.stringify({ type: "error", message: "Invalid JSON" }));
+        return player.ws.send(JSON.stringify({ type: "error", message: "Invalid JSON" }));
     }
 
-    const { type, content } = data;
+    const { type } = data;
 
     if (type === "player_joined") {
-        LOBBY.players.push(ws);
-        console.log(LOBBY)
-        broadcastToLobby(LOBBY, { type: 'player_joined', playerId: ws.id });
+        LOBBY.players.push(player);
+        broadcastToLobby(LOBBY, { type: 'player_joined', playerId: player.id });
     }
 };
 
 const HandleClose = (ws) => {
     // Remove the player from the lobby
     LOBBY.players = LOBBY.players.filter(p => p !== ws);
-
-    // Notify the lobby that the player has left
     broadcastToLobby(LOBBY, { type: 'player_left', playerId: ws.id });
 };
 
 const MatchmakePlayers = async () => {
     try {
-        // Fetch players sorted by max_streak where status = 0 (waiting)
+        // Fetch players sorted by max_streak where status is waiting and pair the first 2 players
         const players = await pool.query(`
             SELECT * FROM players
             WHERE status = 0
@@ -40,8 +38,6 @@ const MatchmakePlayers = async () => {
         if (players.rows.length < 2) {
             return;
         }
-
-        // Pair the first two players
         const [player1, player2] = players.rows;
 
         // Create a match
@@ -51,7 +47,7 @@ const MatchmakePlayers = async () => {
             RETURNING match_id
         `, [player1.player_id, player2.player_id]);
 
-        // Update player statuses to in-game (1)
+        // Update player statuses to in-game
         await pool.query(`
             UPDATE players
             SET status = 1
@@ -60,7 +56,6 @@ const MatchmakePlayers = async () => {
 
         console.log(`Match created: ${match.rows[0].match_id}`);
 
-        // Notify the lobby about the new match
         broadcastToLobby(LOBBY, {
             type: 'match_created',
             matchId: match.rows[0].match_id,

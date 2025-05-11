@@ -21,7 +21,9 @@ ws.on('message', (data) => {
     console.log(`👤 Player joined: ${msg.playerId}`);
   } else if (msg.type === 'player_left') {
     console.log(`👋 Player left: ${msg.playerId}`);
-  }  else if (msg.type === 'error') {
+  } else if(msg.type === "match_created"){
+    console.log(`🎮 We've got a game: ${msg.player1} vs ${msg.player2}`);
+  }else if (msg.type === 'error') {
     console.error(`❌ Error: ${msg.message}`);
   }
 });

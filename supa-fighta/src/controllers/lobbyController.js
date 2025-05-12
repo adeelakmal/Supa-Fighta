@@ -28,39 +28,32 @@ const HandleClose = (ws) => {
 
 const MatchmakePlayers = async () => {
     try {
-        // Fetch players sorted by max_streak where status is waiting and pair the first 2 players
-        const players = await pool.query(`
-            SELECT * FROM players
-            WHERE status = 0
-            ORDER BY max_streak ASC
-        `);
+        // Sort and filter players on bases of win_streak and status
+        let players = LOBBY.players.sort((p1,p2) => p2.win_streak - p1.win_streak)
+        players = players.filter(p => p.status === 0)
 
-        if (players.rows.length < 2) {
+        if (players.length < 2) {
             return;
         }
-        const [player1, player2] = players.rows;
+        const [player1, player2] = players;
 
         // Create a match
         const match = await pool.query(`
             INSERT INTO matches (player1_id, player2_id, timestamp, status)
             VALUES ($1, $2, NOW(), 0)
             RETURNING match_id
-        `, [player1.player_id, player2.player_id]);
+        `, [player1.id, player2.id]);
 
         // Update player statuses to in-game
-        await pool.query(`
-            UPDATE players
-            SET status = 1
-            WHERE player_id IN ($1, $2)
-        `, [player1.player_id, player2.player_id]);
+        [player1,player2].forEach(p => p.status = 1)
 
         console.log(`Match created: ${match.rows[0].match_id}`);
 
         broadcastToLobby(LOBBY, {
             type: 'match_created',
             matchId: match.rows[0].match_id,
-            player1: player1.player_id,
-            player2: player2.player_id,
+            player1: player1.id,
+            player2: player2.id,
         });
     } catch (error) {
         console.error("Error during matchmaking:", error);

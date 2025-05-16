@@ -29,7 +29,7 @@ const setupWebSocketServer = (port) => {
         const player = new Player(ws, data.username);
         player.id = data.playerId;
 
-        await pool.query(`
+        pool.query(`
           INSERT INTO players (player_id, player_name, status)
           VALUES ($1, $2, 0)
         `, [player.id, player.username]);

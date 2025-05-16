@@ -9,10 +9,11 @@ const rl = readline.createInterface({
 });
 
 let lobbyId = null;
+let playerId = null;
 
 ws.on('open', () => {
   console.log('Connected to WebSocket server.');
-  mainMenu();
+  authenticatePlayer();
 });
 
 ws.on('message', (data) => {
@@ -21,16 +22,50 @@ ws.on('message', (data) => {
     console.log(`👤 Player joined: ${msg.playerId}`);
   } else if (msg.type === 'player_left') {
     console.log(`👋 Player left: ${msg.playerId}`);
-  } else if(msg.type === "match_created"){
+  } else if (msg.type === 'match_created') {
     console.log(`🎮 We've got a game: ${msg.player1} vs ${msg.player2}`);
-  }else if (msg.type === 'error') {
+  } else if (msg.type === 'error') {
     console.error(`❌ Error: ${msg.message}`);
   }
 });
 
-function mainMenu() {
-    ws.send(JSON.stringify({ type: 'player_joined', lobbyId }));
-    messageLoop()
+function authenticatePlayer() {
+  rl.question('Enter your player_id to log in or type "new" to create a new account: ', (input) => {
+    if (input.toLowerCase() === 'new') {
+      createNewPlayer();
+    } else {
+      ws.send(JSON.stringify({ type: 'validate_player', playerId: input }));
+    }
+  });
+}
+
+ws.on('message', (data) => {
+  const msg = JSON.parse(data);
+  if (msg.type === 'validation_result') {
+    if (msg.valid) {
+      playerId = msg.playerId;
+      console.log(`✅ Successfully logged in as player_id: ${playerId}`);
+      joinLobby();
+    } else {
+      console.log('❌ Invalid player_id. Please try again.');
+      authenticatePlayer();
+    }
+  }
+});
+
+function createNewPlayer() {
+  rl.question('Enter a username for your new account: ', (username) => {
+    playerId = generateUUID();
+    console.log(`✅ New player created with ID: ${playerId} and username: ${username}`);
+    ws.send(JSON.stringify({ type: 'create_player', playerId, username }));
+    joinLobby();
+  });
+}
+
+function joinLobby() {
+  ws.send(JSON.stringify({ type: 'player_joined', playerId }));
+  console.log(`✅ Successfully joined the lobby as player_id: ${playerId}`);
+  messageLoop();
 }
 
 function messageLoop() {
@@ -42,5 +77,13 @@ function messageLoop() {
     }
     ws.send(JSON.stringify({ type: 'send_message', content: msg }));
     messageLoop();
+  });
+}
+
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
   });
 }

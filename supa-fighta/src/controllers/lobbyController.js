@@ -28,14 +28,21 @@ const HandleClose = (ws) => {
 
 const MatchmakePlayers = async () => {
     try {
-        // Sort and filter players on bases of win_streak and status
-        let players = LOBBY.players.sort((p1,p2) => p2.win_streak - p1.win_streak)
-        players = players.filter(p => p.status === 0)
+        // Sort and filter players based on win_streak and status
+        let players = LOBBY.players.sort((p1, p2) => p2.win_streak - p1.win_streak);
+        players = players.filter(p => p.status === 0);
 
         if (players.length < 2) {
+            // console.log("Not enough players for matchmaking.");
             return;
         }
+
+        // Select the first two distinct players
         const [player1, player2] = players;
+
+        if (player1.id === player2.id) {
+            return;
+        }
 
         // Create a match
         const match = await pool.query(`
@@ -45,10 +52,11 @@ const MatchmakePlayers = async () => {
         `, [player1.id, player2.id]);
 
         // Update player statuses to in-game
-        [player1,player2].forEach(p => p.status = 1)
+        [player1, player2].forEach(p => p.status = 1);
 
         console.log(`Match created: ${match.rows[0].match_id}`);
 
+        // Notify the lobby about the new match
         broadcastToLobby(LOBBY, {
             type: 'match_created',
             matchId: match.rows[0].match_id,
@@ -60,4 +68,4 @@ const MatchmakePlayers = async () => {
     }
 };
 
-module.exports = { HandleMessage, HandleClose, MatchmakePlayers };
+module.exports = { HandleMessage, HandleClose, MatchmakePlayers, LOBBY };

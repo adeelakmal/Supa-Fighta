@@ -4,7 +4,6 @@ const { broadcastToLobby } = require("../utils/lobbyUtils");
 const LOBBY = { players: [] };
 
 const HandleMessage = (player, msg) => {
-    // Hanldes broadcasting messages for players joining the lobby
     let data;
     try {
         data = JSON.parse(msg);
@@ -13,9 +12,9 @@ const HandleMessage = (player, msg) => {
     }
 
     const { type } = data;
-
+    
     if (type === "player_joined") {
-        LOBBY.players.push(player);
+        // LOBBY.players.push(player);
         broadcastToLobby(LOBBY, { type: 'player_joined', playerId: player.id });
     }
 };

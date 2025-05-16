@@ -55,9 +55,8 @@ ws.on('message', (data) => {
 
 function createNewPlayer() {
   rl.question('Enter a username for your new account: ', (username) => {
-    playerId = generateUUID();
-    console.log(`✅ New player created with ID: ${playerId} and username: ${username}`);
-    ws.send(JSON.stringify({ type: 'create_player', playerId, username }));
+    console.log(`✅ New player created with Username: ${username}`);
+    ws.send(JSON.stringify({ type: 'create_player', username }));
     joinLobby();
   });
 }
@@ -77,13 +76,5 @@ function messageLoop() {
     }
     ws.send(JSON.stringify({ type: 'send_message', content: msg }));
     messageLoop();
-  });
-}
-
-function generateUUID() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
-    const r = (Math.random() * 16) | 0;
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
   });
 }

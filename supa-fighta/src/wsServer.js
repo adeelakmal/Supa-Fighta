@@ -18,7 +18,6 @@ const setupWebSocketServer = (port) => {
         const result = await pool.query('SELECT * FROM players WHERE player_id = $1', [data.playerId]);
         if (result.rows.length > 0 && !LOBBY.players.some(p => p.id === data.playerId)) {
           const player = new Player(ws, result.rows[0].player_name);
-          player.id = data.playerId;
           LOBBY.players.push(player);
           ws.send(JSON.stringify({ type: 'validation_result', valid: true, playerId: data.playerId }));
           setupEventListeners(ws, player);
@@ -27,7 +26,6 @@ const setupWebSocketServer = (port) => {
         }
       } else if (data.type === 'create_player') {
         const player = new Player(ws, data.username);
-        player.id = data.playerId;
 
         pool.query(`
           INSERT INTO players (player_id, player_name, status)

@@ -16,18 +16,18 @@ const HandleMessage = async (ws, msg) => {
 
     if (type === "validate_player") {
         const player_exists = await pool.query('SELECT * FROM players WHERE player_id = $1', [playerId]);
-        if (player_exists.rows.length > 0 && !LOBBY.players.some(p => p.id === playerId)) {
-            const player = new Player(ws, player_exists.rows[0].player_name);
-            player.id = playerId;
-            LOBBY.players.push(player);
-            ws.send(JSON.stringify({ type: 'validation_result', valid: true, playerId }));
-            broadcastToLobby(LOBBY, { type: 'player_joined', playerId: player.id });
-        } else {
-            ws.send(JSON.stringify({ type: 'validation_result', valid: false }));
+        if (player_exists.rows.length === 0 && !LOBBY.players.some(p => p.id === playerId)) {
+          ws.send(JSON.stringify({ type: 'validation_result', valid: false }));
+          return
         }
+        const player = new Player(ws, player_exists.rows[0].player_name);
+        player.id = playerId;
+        LOBBY.players.push(player);
+        ws.send(JSON.stringify({ type: 'validation_result', valid: true, playerId }));
+        broadcastToLobby(LOBBY, { type: 'player_joined', playerId: player.id });
+
     } else if (type === "create_player") {
         const player = new Player(ws, username);
-        player.id = ws.id;
         pool.query(`
             INSERT INTO players (player_id, player_name, status)
             VALUES ($1, $2, 0)
@@ -53,7 +53,6 @@ const MatchmakePlayers = async () => {
         if (players.length < 2) return;
 
         const [player1, player2] = players;
-        if (player1.id === player2.id) return;
 
         // Create a match
         const match = await pool.query(`

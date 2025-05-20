@@ -44,10 +44,8 @@ ws.on('message', (data) => {
   if (msg.type === 'validation_result') {
     if (msg.valid) {
       playerId = msg.playerId;
-      console.log(`✅ Successfully logged in as player_id: ${playerId}`);
       joinLobby();
     } else {
-      console.log('❌ Invalid player_id. Please try again.');
       authenticatePlayer();
     }
   }
@@ -63,12 +61,11 @@ function createNewPlayer() {
 
 function joinLobby() {
   ws.send(JSON.stringify({ type: 'player_joined', playerId }));
-  console.log(`✅ Successfully joined the lobby as player_id: ${playerId}`);
   messageLoop();
 }
 
 function messageLoop() {
-  rl.question('Enter message (or "exit" to quit): ', (msg) => {
+  rl.question('Enter message (or "exit" to quit): \n', (msg) => {
     if (msg === 'exit') {
       rl.close();
       ws.close();

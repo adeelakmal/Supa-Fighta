@@ -1,8 +1,6 @@
 const WebSocket = require('ws');
 const crypto = require('crypto');
-const pool = require('./config/db');
 const { HandleMessage, HandleClose, MatchmakePlayers} = require('./controllers/lobbyController');
-const Player = require('./models/playerModel');
 
 const setupWebSocketServer = (port) => {
   const wss = new WebSocket.Server({ port: port });

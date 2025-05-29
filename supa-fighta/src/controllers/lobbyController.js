@@ -1,8 +1,12 @@
 const pool = require('../config/db');
 const { broadcastToLobby } = require("../utils/lobbyUtils");
 const Player = require('../models/playerModel');
+const PlayerRepository = require('../repositories/playerRepository')
+const MatchesRepository = require('../repositories/matchesRepository')
 
 const LOBBY = { players: [] };
+const playerRepository = new PlayerRepository(pool)
+const matchesRepository = new MatchesRepository(pool)
 
 const HandleMessage = async (ws, msg) => {
     let data;
@@ -15,7 +19,7 @@ const HandleMessage = async (ws, msg) => {
     const { type, playerId, username } = data;
 
     if (type === "validate_player") {
-        const player_exists = await pool.query('SELECT * FROM players WHERE player_id = $1', [playerId]);
+        const player_exists = await playerRepository.getPlayerById(playerId)
         if (player_exists.rows.length === 0 && !LOBBY.players.some(p => p.id === playerId)) {
           ws.send(JSON.stringify({ type: 'validation_result', valid: false }));
           return
@@ -28,10 +32,7 @@ const HandleMessage = async (ws, msg) => {
 
     } else if (type === "create_player") {
         const player = new Player(ws, username);
-        pool.query(`
-            INSERT INTO players (player_id, player_name, status)
-            VALUES ($1, $2, 0)
-        `, [player.id, player.username]);
+        playerRepository.addNewPlayer(player)
         LOBBY.players.push(player);
         ws.send(JSON.stringify({ type: 'player_created', playerId: player.id }));
         broadcastToLobby(LOBBY, { type: 'player_joined', playerId: player.id });
@@ -46,29 +47,27 @@ const HandleClose = (ws) => {
 
 const MatchmakePlayers = async () => {
     try {
+        
         // Sort and filter players based on win_streak and status
-        let players = LOBBY.players.sort((p1, p2) => p2.win_streak - p1.win_streak);
-        players = players.filter(p => p.status === 0);
+        let players = LOBBY.players
+        .sort((p1, p2) => p2.win_streak - p1.win_streak)
+        .filter(p => p.status === 0);
 
         if (players.length < 2) return;
 
         const [player1, player2] = players;
-
+        
         // Create a match
-        const match = await pool.query(`
-            INSERT INTO matches (player1_id, player2_id, timestamp, status)
-            VALUES ($1, $2, NOW(), 0)
-            RETURNING match_id
-        `, [player1.id, player2.id]);
-
+        const match_id = await matchesRepository.createMatch(player1, player2)
+        const matchPlayers = [player1, player2]
         // Update player statuses to in-game
-        [player1, player2].forEach(p => p.status = 1);
+        matchPlayers.forEach(p => p.status = 1);
 
-        console.log(`Match created: ${match.rows[0].match_id}`);
+        console.log(`Match created: ${match_id}`);
 
         broadcastToLobby(LOBBY, {
             type: 'match_created',
-            matchId: match.rows[0].match_id,
+            matchId: match_id,
             player1: player1.id,
             player2: player2.id,
         });

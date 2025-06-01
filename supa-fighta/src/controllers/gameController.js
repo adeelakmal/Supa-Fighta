@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const MatchesRepository = require('../repositories/matchesRepository');
 
+
 class Game {
     constructor(matchId, player1, player2) {
         this.matchRepository = new MatchesRepository(pool)
@@ -8,18 +9,83 @@ class Game {
         this.player1 = player1;
         this.player2 = player2;
         this.status = 0; // 0 = in-game, 1 = ended
+
+        // Game state
+        this.positions = {
+            [player1.id]: { x: 0, y: 0 },
+            [player2.id]: { x: 10, y: 0 }
+        };
+        this.actions = {
+            [player1.id]: 'idle',
+            [player2.id]: 'idle'
+        };
+        this.inputQueue = {
+            [player1.id]: [],
+            [player2.id]: []
+        };
+        this.timer = 60 * 60; // 60 seconds at 60Hz
+        this.winner = null;
+        this.interval = null;
+        this.playerDistance = 1; // Minimum allowed distance between players
     }
 
-    async start() {
+    start() {
         console.log(`Starting match ${this.matchId} between ${this.player1.id} and ${this.player2.id}`);
-        // Notify players that the game has started
         this.player1.ws.send(JSON.stringify({ type: 'game_start', opponent: this.player2.id }));
         this.player2.ws.send(JSON.stringify({ type: 'game_start', opponent: this.player1.id }));
+        this.interval = setInterval(() => this.tick(), 1000 / 60);
+    }
+
+    receiveInput(playerId, input) {
+        if (this.inputQueue[playerId]) {
+            this.inputQueue[playerId].push(input);
+        }
+    }
+
+    tick() {
+        // Process inputs for both players
+        [this.player1.id, this.player2.id].forEach(pid => {
+            const input = this.inputQueue[pid].shift();
+            if (input) {
+                this.processInput(pid, input);
+                // Log input and position only when input is detected
+                console.log(
+                    `Player ${pid} input: ${input} | Position: x=${this.positions[pid].x}, y=${this.positions[pid].y}`
+                );
+            }
+        });
+
+        // Advance timer and check for end
+        this.timer--;
+        if (this.timer <= 0) {
+            this.end(null); // Draw or time-out
+        }
+    }
+
+    processInput(playerId, input) {
+        const otherId = playerId === this.player1.id ? this.player2.id : this.player1.id;
+        const pos = this.positions[playerId];
+        const otherPos = this.positions[otherId];
+        const moveStep = 1;
+
+        if (input === 'move_left') {
+            // Prevent overlap
+            if (pos.x - moveStep < otherPos.x - this.playerDistance || pos.x - moveStep > otherPos.x + this.playerDistance) {
+                pos.x -= moveStep;
+            }
+        } else if (input === 'move_right') {
+            if (pos.x + moveStep > otherPos.x + this.playerDistance || pos.x + moveStep < otherPos.x - this.playerDistance) {
+                pos.x += moveStep;
+            }
+        } else if (input === 'move_up') {
+            pos.y += moveStep;
+        } else if (input === 'move_down') {
+            pos.y -= moveStep;
+        }
     }
 
     async end(winner) {
-        losser = winner.id === this.player1.id ? this.player2 : this.player1
-        console.log(`Ending match ${this.matchId}. Winner: ${winner.id}`);
+        clearInterval(this.interval);
         this.status = 1;
 
         // Update match status in the database
@@ -46,8 +112,8 @@ class Game {
         `, [winner.id === this.player1.id ? this.player2.id : this.player1.id]);*/
 
         // Notify players that the game has ended
-        this.player1.ws.send(JSON.stringify({ type: 'game_end', winner: winnerId }));
-        this.player2.ws.send(JSON.stringify({ type: 'game_end', winner: winnerId }));
+        this.player1.ws.send(JSON.stringify({ type: 'game_end', winner: winner ? winner.id : null }));
+        this.player2.ws.send(JSON.stringify({ type: 'game_end', winner: winner ? winner.id : null }));
     }
 }
 

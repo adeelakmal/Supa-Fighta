@@ -65,13 +65,18 @@ function joinLobby() {
 }
 
 function messageLoop() {
-  rl.question('Enter message (or "exit" to quit): \n', (msg) => {
+  rl.question('Enter command (move_left, move_right, move_up, move_down, exit): ', (msg) => {
     if (msg === 'exit') {
       rl.close();
       ws.close();
       return;
     }
-    ws.send(JSON.stringify({ type: 'send_message', content: msg }));
+    // Send as input if it's a movement command
+    if (['move_left', 'move_right', 'move_up', 'move_down'].includes(msg)) {
+      ws.send(JSON.stringify({ type: 'input', playerId, action: msg }));
+    } else {
+      ws.send(JSON.stringify({ type: 'send_message', content: msg }));
+    }
     messageLoop();
   });
 }

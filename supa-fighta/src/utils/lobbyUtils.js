@@ -1,8 +1,9 @@
 function broadcastToLobby(lobby, message) {
     const json = JSON.stringify(message);
-    lobby.players.forEach((ws) => {
-      if (ws.readyState === ws.OPEN) {
-        ws.send(json);
+    console.log(`Broadcasting to lobby: ${json}`);
+    lobby.players.forEach((player) => {
+      if (player.ws.readyState === player.ws.OPEN) {
+        player.ws.send(json);
       }
     });
   }

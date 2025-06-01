@@ -1,22 +1,22 @@
-// Initialize a server here for websockets 
 const WebSocket = require('ws');
-const pool = require('./config/db')
-const { HandleMessage, HandleClose } = require('./controllers/lobbyController');
-
+const crypto = require('crypto');
+const { HandleMessage, HandleClose, MatchmakePlayers} = require('./controllers/lobbyController');
 
 const setupWebSocketServer = (port) => {
-const wss = new WebSocket.Server({ port: port });
-  wss.on('connection', async (ws) => {
+  const wss = new WebSocket.Server({ port: port });
+
+  wss.on('connection', (ws) => {
     ws.id = crypto.randomUUID();
-    console.log(`A new player - ${ws.id} has joined the lobby`);
-    let result = await pool.query(`INSERT INTO public."Players" (id) VALUES ($1) RETURNING *`, [ws.id])
-    console.log("Player inserted into db:", result)
-    
-    ws.on('message', message => HandleMessage(ws, message))
+    ws.on('message', (message) => HandleMessage(ws, message));
     ws.on('close', () => HandleClose(ws));
-  
-  })
+  });
+
+  // Periodically run matchmaking
+  setInterval(async () => {
+    await MatchmakePlayers();
+  }, 5000);
+
   console.log('WebSocket server is listening on ws://localhost:8080');
-}
+};
 
 module.exports = setupWebSocketServer;

@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const MatchesRepository = require('../repositories/matchesRepository');
+const PlayerState = require('../models/playerState');
 
 
 class Game {
@@ -10,10 +11,10 @@ class Game {
         this.player2 = player2;
         this.status = 0; // 0 = in-game, 1 = ended
 
-        // Game state
+        // Use PlayerState objects
         this.positions = {
-            [player1.id]: { x: -5, y: 0 },
-            [player2.id]: { x: 5, y: 0 }
+            [player1.id]: new PlayerState(-5, 0),
+            [player2.id]: new PlayerState(5, 0)
         };
         this.actions = {
             [player1.id]: 'idle',

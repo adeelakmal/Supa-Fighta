@@ -24,7 +24,7 @@ class Game {
             [player1.id]: [],
             [player2.id]: []
         };
-        this.timer = 60 * 60; // 60 seconds at 60Hz
+        this.timer = 5 * 60; // 60 seconds at 60Hz
         this.winner = null;
         this.interval = null;
         this.playerDistance = 1; // Minimum allowed distance between players
@@ -84,6 +84,14 @@ class Game {
         this.status = 1;
 
         // Update match status in the database
+        if (!winner) {
+            console.log(`Match ${this.matchId} ended in a draw or time-out.`);
+            await this.matchRepository.updateMatchStatus(null, this.matchId);
+            this.player1.ws.send(JSON.stringify({ type: 'game_end', winner: null }));
+            this.player2.ws.send(JSON.stringify({ type: 'game_end', winner: null }));
+            return;
+        }
+        console.log(`Match ${this.matchId} ended with ${winnerd.id} as winner.`);
         await this.matchRepository.updateMatchStatus(winner.id,this.matchId)
 
         // Update players' stats

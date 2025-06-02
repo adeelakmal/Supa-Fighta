@@ -1,6 +1,7 @@
 const WebSocket = require('ws');
 const crypto = require('crypto');
-const { HandleMessage, HandleClose, MatchmakePlayers} = require('./controllers/lobbyController');
+const gameManager = require('./controllers/gameManager');
+const { HandleMessage, HandleClose, MatchmakePlayers } = require('./controllers/lobbyController');
 
 
 const setupWebSocketServer = (port) => {
@@ -10,17 +11,25 @@ const setupWebSocketServer = (port) => {
     ws.id = crypto.randomUUID();
     ws.on('message', (message) => {
       let data;
-      try { data = JSON.parse(message); } catch { return; }
+      try {
+        data = JSON.parse(message);
+      } catch {
+        console.error('Failed to parse message:', message.toString());
+        console.error('Parse error:', err);
+        ws.send(JSON.stringify({ type: 'error', message: 'Invalid JSON format.' }));
+        return;
+      }
 
+      // Handle input messages for the game
       if (data.type === 'input' && data.playerId && data.action) {
-          // Route input to gameManager
-          gameManager.routeInput(data.playerId, data.action);
-          return;
+        gameManager.routeInput(data.playerId, data.action);
+        return;
       }
 
       // Otherwise, handle as a lobby message
       HandleMessage(ws, message);
     });
+
     ws.on('close', () => HandleClose(ws));
   });
 

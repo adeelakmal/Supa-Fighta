@@ -12,8 +12,8 @@ class Game {
 
         // Game state
         this.positions = {
-            [player1.id]: { x: 0, y: 0 },
-            [player2.id]: { x: 10, y: 0 }
+            [player1.id]: { x: -5, y: 0 },
+            [player2.id]: { x: 5, y: 0 }
         };
         this.actions = {
             [player1.id]: 'idle',
@@ -37,9 +37,7 @@ class Game {
     }
 
     receiveInput(playerId, input) {
-        if (this.inputQueue[playerId]) {
-            this.inputQueue[playerId].push(input);
-        }
+        this.inputQueue[playerId].push(input);
     }
 
     tick() {
@@ -77,10 +75,6 @@ class Game {
             if (pos.x + moveStep > otherPos.x + this.playerDistance || pos.x + moveStep < otherPos.x - this.playerDistance) {
                 pos.x += moveStep;
             }
-        } else if (input === 'move_up') {
-            pos.y += moveStep;
-        } else if (input === 'move_down') {
-            pos.y -= moveStep;
         }
     }
 

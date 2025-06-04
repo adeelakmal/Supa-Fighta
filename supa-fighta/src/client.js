@@ -26,6 +26,16 @@ ws.on('message', (data) => {
     console.log(`🎮 We've got a game: ${msg.player1} vs ${msg.player2}`);
   } else if (msg.type === 'error') {
     console.error(`❌ Error: ${msg.message}`);
+  } else if (msg.type === 'validation_result') {
+    if (msg.valid) {
+      playerId = msg.playerId;
+      joinLobby();
+    } else {
+      authenticatePlayer();
+    }
+  } else if (msg.type === 'player_created') {
+    playerId = msg.playerId;
+    joinLobby();
   }
 });
 
@@ -39,23 +49,10 @@ function authenticatePlayer() {
   });
 }
 
-ws.on('message', (data) => {
-  const msg = JSON.parse(data);
-  if (msg.type === 'validation_result') {
-    if (msg.valid) {
-      playerId = msg.playerId;
-      joinLobby();
-    } else {
-      authenticatePlayer();
-    }
-  }
-});
-
 function createNewPlayer() {
   rl.question('Enter a username for your new account: ', (username) => {
     console.log(`✅ New player created with Username: ${username}`);
     ws.send(JSON.stringify({ type: 'create_player', username }));
-    joinLobby();
   });
 }
 
@@ -65,13 +62,20 @@ function joinLobby() {
 }
 
 function messageLoop() {
-  rl.question('Enter message (or "exit" to quit): \n', (msg) => {
+  rl.question('Enter command (move_left, move_right, exit): ', (msg) => {
     if (msg === 'exit') {
       rl.close();
       ws.close();
       return;
     }
-    ws.send(JSON.stringify({ type: 'send_message', content: msg }));
+    // Send as input if it's a movement command
+    if (['move_left', 'move_right'].includes(msg)) {
+      let i
+      for (i=0;i<100;i++) {ws.send(JSON.stringify({ type: 'input', playerId, action: msg }));}
+      // ws.send(JSON.stringify({ type: 'input', playerId, action: msg }));
+    } else {
+      ws.send(JSON.stringify({ type: 'send_message', content: msg }));
+    }
     messageLoop();
   });
 }

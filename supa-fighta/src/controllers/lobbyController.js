@@ -3,6 +3,7 @@ const { broadcastToLobby } = require("../utils/lobbyUtils");
 const Player = require('../models/playerModel');
 const PlayerRepository = require('../repositories/playerRepository')
 const MatchesRepository = require('../repositories/matchesRepository')
+const gameManager = require('./gameManager');
 
 const LOBBY = { players: [] };
 const playerRepository = new PlayerRepository(pool)
@@ -64,6 +65,8 @@ const MatchmakePlayers = async () => {
         matchPlayers.forEach(p => p.status = 1);
 
         console.log(`Match created: ${match_id}`);
+
+        gameManager.createGame(match_id, player1, player2);
 
         broadcastToLobby(LOBBY, {
             type: 'match_created',

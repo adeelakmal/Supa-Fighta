@@ -1,11 +1,20 @@
+from animations.sprites import SpriteSheet
+from animations.animation import Animator
 import pygame
 import config
 
 class Player:
     def __init__(self, x, y, net):
-        self.rect = pygame.Rect(x, y, config.PLAYER_SIZE, config.PLAYER_SIZE)
+        self.player_sprites = {
+            "idel": SpriteSheet("./supa-fighta-client/assets/Idel.png").get_sprites(120, 120, 1, 5),
+        }
+        self.player_animations = {
+            "idel": Animator(self.player_sprites["idel"], frame_rate=15, loop=True),
+        }
+        self.player_x = x
+        self.player_y = y
         self.color = config.PLAYER_COLOR
-        self.speed = 5
+        self.speed = 2
         self.net = net
     def handle_keys(self):
         keys = pygame.key.get_pressed()
@@ -13,22 +22,24 @@ class Player:
         moved = False
         
         if keys[pygame.K_LEFT]:
-            self.rect.x -= self.speed
+            self.player_x -= self.speed
             moved = True
         if keys[pygame.K_RIGHT]:
-            self.rect.x += self.speed
+            self.player_x += self.speed
             moved = True
         if keys[pygame.K_UP]:
-            self.rect.y -= self.speed
+            self.player_y -= self.speed
             moved = True
         if keys[pygame.K_DOWN]:
-            self.rect.y += self.speed
+            self.player_y += self.speed
             moved = True
 
         # if moved:
         #     self.rect.move_ip(dx, dy)    # local prediction
         #     # tell the server; keep the payload tiny
         #     self.net.send("move", {"dx": dx, "dy": dy})
+    def update(self):
+        self.player_animations["idel"].update()
 
     def draw(self, surface):
-        pygame.draw.rect(surface, self.color, self.rect)
+        self.player_animations["idel"].draw(surface, (self.player_x, self.player_y))

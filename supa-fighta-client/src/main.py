@@ -1,15 +1,16 @@
 import pygame, sys, config
 from game.player import Player
 from server.ws_client import WSClient
+from game.stateManager import GameState
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))
     pygame.display.set_caption("Supa Fighta")
     clock = pygame.time.Clock()
-
     net = WSClient(config.WS_URL)   
-    player = Player(config.WINDOW_WIDTH // 2, config.WINDOW_HEIGHT // 2, net)
+    gameState = GameState(net)
+   
 
     try:
         running = True
@@ -19,11 +20,14 @@ def main():
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                else:
+                    gameState.handle_event(event)
 
-            player.handle_keys()
+            gameState.update()
+            gameState.draw(screen)
 
-            screen.fill(config.BACKGROUND_COLOR)
-            player.draw(screen)
+            # screen.fill(config.BACKGROUND_COLOR)
+            # player.draw(screen)
             pygame.display.flip()
 
     finally:

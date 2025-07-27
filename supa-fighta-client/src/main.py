@@ -26,8 +26,6 @@ def main():
             gameState.update()
             gameState.draw(screen)
 
-            # screen.fill(config.BACKGROUND_COLOR)
-            # player.draw(screen)
             pygame.display.flip()
 
     finally:

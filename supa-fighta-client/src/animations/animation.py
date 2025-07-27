@@ -7,6 +7,7 @@ class Animator:
         self.loop = loop
         self.current_frame = 0
         self.last_update = pygame.time.get_ticks()
+        self.finished = False
 
     def update(self):
         now = pygame.time.get_ticks()
@@ -17,8 +18,16 @@ class Animator:
                     self.current_frame = 0
                 else:
                     self.current_frame = len(self.sprites) - 1
+                    self.finished = True
             self.last_update = now 
     
     def draw(self, surface, position):
         sprite = self.sprites[self.current_frame]
         surface.blit(sprite, position)
+
+    def is_finished(self):
+        return self.finished
+    def reset(self):
+        self.current_frame = 0
+        self.finished = False
+        self.last_update = pygame.time.get_ticks()

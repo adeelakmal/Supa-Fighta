@@ -3,7 +3,7 @@ from animations.animation import Animator
 import pygame
 import config
 
-ACTIONABLE_STATES = ['dash', 'punch']
+ACTIONABLE_STATES = ['dash', 'punch', 'parry']
 DASH_FACTOR = 2.5
 
 class Player:
@@ -13,12 +13,14 @@ class Player:
             "walk": SpriteSheet("./supa-fighta-client/assets/Walk.png").get_sprites(120, 120, 1, 5),
             "dash": SpriteSheet("./supa-fighta-client/assets/Dash.png").get_sprites(120, 120, 1, 5),
             "punch": SpriteSheet("./supa-fighta-client/assets/Punch.png").get_sprites(120, 120, 1, 9),
+            "parry": SpriteSheet("./supa-fighta-client/assets/Parry.png").get_sprites(120, 120, 1, 5),
         }
         self.player_animations = {
             "idel": Animator(self.player_sprites["idel"], frame_rate=15, loop=True),
             "walk": Animator(self.player_sprites["walk"], frame_rate=15, loop=True),
             "dash": Animator(self.player_sprites["dash"], frame_rate=20, loop=False),
             "punch": Animator(self.player_sprites["punch"], frame_rate=25, loop=False),
+            "parry": Animator(self.player_sprites["parry"], frame_rate=15, loop=False),
         }
         self.last_tap_time = {pygame.K_LEFT: 0, pygame.K_RIGHT: 0}
         self.player_x = x
@@ -39,8 +41,10 @@ class Player:
             if self.player_state != 'punch':
                 self.player_state = 'punch'
                 self.player_animations['punch'].reset()
-  
-
+        if keys[pygame.K_a]:
+            if self.player_state != "parry":
+                self.player_state = "parry"
+                self.player_animations['parry'].reset()
         if keys[pygame.K_LEFT]:
             delta_left_tap = now - self.last_tap_time[pygame.K_LEFT]
             if (30 < delta_left_tap < 200) and (self.player_state != 'dash'):

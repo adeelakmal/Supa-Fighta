@@ -25,6 +25,7 @@ const HandleMessage = async (ws, msg) => {
           ws.send(JSON.stringify({ type: 'validation_result', valid: false }));
           return
         }
+        ws.id = playerId
         const player = new Player(ws, player_exists.rows[0].player_name);
         player.id = playerId;
         LOBBY.players.push(player);
@@ -42,7 +43,7 @@ const HandleMessage = async (ws, msg) => {
 
 const HandleClose = (ws) => {
     // Remove the player from the lobby
-    LOBBY.players = LOBBY.players.filter(p => p !== ws);
+    LOBBY.players = LOBBY.players.filter(p => p.id !== ws.id);
     broadcastToLobby(LOBBY, { type: 'player_left', playerId: ws.id });
 };
 

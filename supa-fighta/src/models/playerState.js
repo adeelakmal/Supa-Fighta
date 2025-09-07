@@ -1,8 +1,11 @@
+const { Inputs } = require("../enums");
+
 class PlayerState {
-    constructor(x = 0, y = 0) {
+    constructor(x = 320, y = 180) {
         this.x = x;
         this.y = y;
-        // You can add more properties here, e.g. velocity, health, etc.
+        this.vleocity = 0;
+        this.state = Inputs.IDEL
     }
 }
 

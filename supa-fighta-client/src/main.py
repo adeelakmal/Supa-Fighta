@@ -1,5 +1,4 @@
 import pygame, sys, config
-from game.player import Player
 from server.ws_client import WSClient
 from game.stateManager import GameState
 

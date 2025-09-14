@@ -1,6 +1,7 @@
 import threading
 import websocket
 import json
+import asyncio
 
 
 
@@ -14,7 +15,9 @@ class WSClient:
         self.ws = websocket.WebSocket()
         self.ws.connect(url)
         self._running = True
-        threading.Thread(target=self._recv_loop, daemon=True).start()
+        self._response = None
+        self._response_event = threading.Event()
+        threading.Thread(target=self._start_async_recv_loop, daemon=True).start()
         self.send({"type":'validate_player', "playerId": "eecb1d48-7e94-4ce9-8b00-1c40e7ddf8e7"})
 
     def send(self, payload: dict | None = None):
@@ -22,16 +25,37 @@ class WSClient:
         Serialise to JSON and push to the server.
         """
         self.ws.send(json.dumps(payload))
+    
+    def send_snapshot(self, snapshot: dict):
+        self._response_event.clear()
+        self._response = None
+        self.send({"type": "snapshot", "playerId": "eecb1d48-7e94-4ce9-8b00-1c40e7ddf8e7", "snapshot": snapshot})
+
+    def get_last_response(self):
+        return self._response
 
     def close(self):
         self._running = False
         self.ws.close()
 
-    def _recv_loop(self):
+    def _start_async_recv_loop(self):
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(self._async_recv_loop())
+
+    async def _async_recv_loop(self):
         while self._running:
             try:
-                msg = self.ws.recv()
+                msg = await asyncio.to_thread(self.ws.recv)
                 if msg:
+                    data = json.loads(msg)
+                    self._response = data
+                    self._response_event.set()
+                    #TODO: Add logic in the game state to correct any discrepancies
+                    # If message recieved is a snapshot ack, dont need to do anything
+                    # If message recieved asks to correct game state, do so
                     print("Srv ▸", msg)
             except websocket.WebSocketConnectionClosedException:
                 break
+            except Exception:
+                await asyncio.sleep(0.1)

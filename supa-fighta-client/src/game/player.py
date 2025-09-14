@@ -23,6 +23,7 @@ class Player:
             "parry": Animator(self.player_sprites["parry"], frame_rate=15, loop=False),
         }
         self.last_tap_time = {pygame.K_LEFT: 0, pygame.K_RIGHT: 0}
+        self._inputs = []
         self.player_x = x
         self.player_y = y
         self.speed = 2
@@ -53,7 +54,6 @@ class Player:
             else:
                 self.player_state = 'walk'
             self.velocity = -self.speed * ((DASH_FACTOR-0.5) if self.player_state == 'dash' else 1)
-            moved = True
             self.last_tap_time[pygame.K_LEFT] = now
         if keys[pygame.K_RIGHT]:
             delta_right_tap = now - self.last_tap_time[pygame.K_RIGHT]
@@ -63,13 +63,9 @@ class Player:
             else:
                 self.player_state = 'walk'
             self.velocity = self.speed * (DASH_FACTOR if self.player_state == 'dash' else 1)
-            moved = True
             self.last_tap_time[pygame.K_RIGHT] = now
+        self._inputs.append(self.player_state)
 
-        # if moved:
-        #     self.rect.move_ip(dx, dy)    # local prediction
-        #     # tell the server; keep the payload tiny
-        #     self.net.send("move", {"dx": dx, "dy": dy})
     def update(self):
         self.player_animations[self.player_state].update()
         self.player_x += self.velocity

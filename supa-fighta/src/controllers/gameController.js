@@ -13,7 +13,7 @@ class Game {
 
         // Use PlayerState objects
         this.positions = {
-            [player1.id]: new PlayerState(-5, 0),
+            [player1.id]: new PlayerState(320, 180),
             [player2.id]: new PlayerState(5, 0)
         };
         this.actions = {
@@ -24,7 +24,7 @@ class Game {
             [player1.id]: [],
             [player2.id]: []
         };
-        this.timer = 5 * 60; // 60 seconds at 60Hz
+        this.timer = 60 * 60; // 60 seconds at 60Hz
         this.winner = null;
         this.interval = null;
         this.playerDistance = 1; // Minimum allowed distance between players
@@ -43,14 +43,21 @@ class Game {
 
     tick() {
         // Process inputs for both players
+        const inputs = {};
         [this.player1.id, this.player2.id].forEach(pid => {
-            const input = this.inputQueue[pid].shift();
+            inputs[pid] = this.inputQueue[pid].shift();
+        });
+
+        [this.player1, this.player2].forEach(player => {
+            const input = this.inputQueue[player.id].shift();
             if (input) {
-                this.processInput(pid, input);
+                this.processInput(player.id, input);
                 // Log input and position only when input is detected
                 console.log(
-                    `Player ${pid} input: ${input} | Position: x=${this.positions[pid].x}, y=${this.positions[pid].y}`
+                    `Player ${player.id} input: ${input} | Position: x=${this.positions[player.id].x}, y=${this.positions[player.id].y}`
                 );
+                player.ws.send(JSON.stringify({ type: 'input_ack', x: this.positions[player.id].x, y: this.positions[player.id].y }));
+                
             }
         });
 
@@ -68,7 +75,6 @@ class Game {
         const moveStep = 1;
 
         if (input === 'move_left') {
-            // Prevent overlap
             if (pos.x - moveStep < otherPos.x - this.playerDistance || pos.x - moveStep > otherPos.x + this.playerDistance) {
                 pos.x -= moveStep;
             }
@@ -83,7 +89,6 @@ class Game {
         clearInterval(this.interval);
         this.status = 1;
 
-        // Update match status in the database
         if (!winner) {
             console.log(`Match ${this.matchId} ended in a draw or time-out.`);
             await this.matchRepository.updateMatchStatus(null, this.matchId);
@@ -96,11 +101,15 @@ class Game {
 
         // Update players' stats
         winner.total_wins++;
+        winner.current_streak++;
+        winner.max_streak = Math.max(winner.max_streak, winner.current_streak);
         losser.total_losses++;
         losser.current_streak = 0;
 
-        // TODO: Replace these only when actual game logic is written
-        // Update all the player stats in the db when they leave the server this helps reduce total db calls made
+        /**
+         * TODO: Replace these only when actual game logic is written
+         * Update all the player stats in the db when they leave the server this helps reduce total db calls made
+         */
         
         /*await pool.query(`
             UPDATE players

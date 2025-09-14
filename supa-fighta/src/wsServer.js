@@ -21,12 +21,12 @@ const setupWebSocketServer = (port) => {
       }
 
       // Handle input messages for the game
-      if (data.type === 'input' && data.playerId && data.action) {
-        gameManager.routeInput(data.playerId, data.action);
-        return;
+      if ( data.type === "snapshot") {
+        // TODO: Validate and process the snapshot
+        console.log("Snapshot received:", data);
+        ws.send(JSON.stringify({ type: 'ack', message: 'valid state' }));
       }
 
-      // Otherwise, handle as a lobby message
       HandleMessage(ws, message);
     });
 

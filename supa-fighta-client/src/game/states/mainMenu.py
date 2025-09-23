@@ -1,9 +1,8 @@
 import pygame
 import config
-from src.game.stateManager import GameState
 
 class MainMenuState:
-    def __init__(self, state_manager: GameState):
+    def __init__(self, state_manager):
         self.state_manager = state_manager
         self.title_font = pygame.font.Font(None,74)
         self.button_font = pygame.font.Font(None, 36)
@@ -34,7 +33,7 @@ class MainMenuState:
                 for button, rect in self.buttons.items():
                     if rect.collidepoint(mouse_pos):
                         if button == "start_game":
-                            self.state_manager.change_state("gameplay")
+                            self.state_manager.change_state("lobby")
                         elif button == "settings":
                             self.state_manager.change_state("settings")
                         elif button == "exit":

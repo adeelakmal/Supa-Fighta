@@ -2,7 +2,7 @@ import threading
 import websocket
 import json
 import asyncio
-
+import config
 
 
 class WSClient:
@@ -18,7 +18,7 @@ class WSClient:
         self._response = None
         self._response_event = threading.Event()
         threading.Thread(target=self._start_async_recv_loop, daemon=True).start()
-        self.send({"type":'validate_player', "playerId": "eecb1d48-7e94-4ce9-8b00-1c40e7ddf8e7"})
+        self.send({"type":'validate_player', "playerId": config.PLAYER_ID})
 
     def send(self, payload: dict | None = None):
         """
@@ -29,7 +29,7 @@ class WSClient:
     def send_snapshot(self, snapshot: dict):
         self._response_event.clear()
         self._response = None
-        self.send({"type": "snapshot", "playerId": "eecb1d48-7e94-4ce9-8b00-1c40e7ddf8e7", "snapshot": snapshot})
+        self.send({"type": "snapshot", "playerId": config.PLAYER_ID, "snapshot": snapshot})
 
     def get_last_response(self):
         return self._response

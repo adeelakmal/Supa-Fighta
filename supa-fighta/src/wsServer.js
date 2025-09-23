@@ -1,7 +1,7 @@
 const WebSocket = require('ws');
 const crypto = require('crypto');
 const gameManager = require('./controllers/gameManager');
-const { HandleMessage, HandleClose, MatchmakePlayers } = require('./controllers/lobbyController');
+const { HandleMessage, HandleClose, MatchmakePlayers, LOBBY } = require('./controllers/lobbyController');
 
 
 const setupWebSocketServer = (port) => {
@@ -22,9 +22,8 @@ const setupWebSocketServer = (port) => {
 
       // Handle input messages for the game
       if ( data.type === "snapshot") {
-        // TODO: Validate and process the snapshot
-        console.log("Snapshot received:", data);
-        ws.send(JSON.stringify({ type: 'ack', message: 'valid state' }));
+        gameManager.routeInput(LOBBY, data.playerId, data.snapshot);
+        // ws.send(JSON.stringify({ type: 'ack', message: 'valid state' }));
       }
 
       HandleMessage(ws, message);

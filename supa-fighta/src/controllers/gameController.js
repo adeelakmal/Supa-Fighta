@@ -85,6 +85,17 @@ class Game {
         }
     }
 
+    validateState(playerId, snapshot) {
+        const player_state  = snapshot.player;
+        const { history, state, x, y } = player_state;
+        console.log("Validating state for player:", history, "x:", x, "y:", y);
+        const serverPos = this.positions[playerId];
+        history.forEach((input, index) => {
+            this.processInput(playerId, input); 
+        })
+        console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
+    }
+
     async end(winner) {
         clearInterval(this.interval);
         this.status = 1;

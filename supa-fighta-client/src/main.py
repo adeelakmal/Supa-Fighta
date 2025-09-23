@@ -10,7 +10,6 @@ def main():
     net = WSClient(config.WS_URL)   
     gameState = GameState(net)
    
-
     try:
         running = True
         while running:

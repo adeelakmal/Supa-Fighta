@@ -71,8 +71,8 @@ function messageLoop() {
     // Send as input if it's a movement command
     if (['move_left', 'move_right'].includes(msg)) {
       let i
-      for (i=0;i<100;i++) {ws.send(JSON.stringify({ type: 'input', playerId, action: msg }));}
-      // ws.send(JSON.stringify({ type: 'input', playerId, action: msg }));
+      // for (i=0;i<100000000;i++) {ws.send(JSON.stringify({ type: 'input', playerId, action: msg }));}
+      ws.send(JSON.stringify({ type: 'input', playerId, action: msg }));
     } else {
       ws.send(JSON.stringify({ type: 'send_message', content: msg }));
     }

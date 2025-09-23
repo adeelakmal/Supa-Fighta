@@ -2,25 +2,24 @@ const Game = require('./gameController');
 
 class GameManager {
     constructor() {
-        this.activeGames = {}; // matchId -> Game instance
-        this.playerToGame = {}; // playerId -> matchId
+        this.activeGames = [];
     }
 
     createGame(matchId, player1, player2) {
         const game = new Game(matchId, player1, player2);
-        this.activeGames[matchId] = game;
-        this.playerToGame[player1.id] = matchId;
-        this.playerToGame[player2.id] = matchId;
+        this.activeGames.push(game)
         game.start();
-        return game;
     }
 
-    routeInput(playerId, input) {
-        const matchId = this.playerToGame[playerId];
-        if (matchId && this.activeGames[matchId]) {
-            this.activeGames[matchId].receiveInput(playerId, input);
+    routeInput(lobby, playerId, snapshot) {
+        const player = lobby.players.find(p =>  p.id === playerId);
+        const game = this.activeGames.find(g => g.matchId === player.match_id);
+        console.log("Routing input for player:", player.id, "in match:", player.match_id);
+        if (game) {
+            game.validateState(playerId, snapshot);
         }
     }
+
 
     endGame(matchId) {
         delete this.activeGames[matchId];

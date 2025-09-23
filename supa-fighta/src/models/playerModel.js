@@ -3,7 +3,8 @@ class Player {
       this.id = ws.id;
       this.ws = ws;
       this.username = username;
-      this.status = 0
+      this.status = 0;
+      this.match_id = null;
       this.win_streak = win_streak
       this.total_wins = total_wins
       this.total_losses = total_losses

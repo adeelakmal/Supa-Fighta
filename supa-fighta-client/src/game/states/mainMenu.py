@@ -1,8 +1,9 @@
 import pygame
 import config
+from src.game.stateManager import GameState
 
 class MainMenuState:
-    def __init__(self, state_manager):
+    def __init__(self, state_manager: GameState):
         self.state_manager = state_manager
         self.title_font = pygame.font.Font(None,74)
         self.button_font = pygame.font.Font(None, 36)

@@ -63,7 +63,10 @@ const MatchmakePlayers = async () => {
         const match_id = await matchesRepository.createMatch(player1, player2)
         const matchPlayers = [player1, player2]
         // Update player statuses to in-game
-        matchPlayers.forEach(p => p.status = 1);
+        matchPlayers.forEach( p => {
+            p.status = 1
+            p.match_id = match_id
+        });
 
         console.log(`Match created: ${match_id}`);
 

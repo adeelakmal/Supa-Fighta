@@ -3,6 +3,8 @@ import config
 from typing import Dict
 from server.ws_client import WSClient
 from game.player import Player
+from animations.sprites import SpriteSheet
+from animations.animation import Animator
 
 class LobbyState:
 
@@ -12,7 +14,8 @@ class LobbyState:
         self.lobby_state = "Waiting for a game"
         self.font = pygame.font.Font(None, 18)
         self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20), net)
-        self.background = pygame.image.load("./supa-fighta-client/assets/background.png").convert()
+        self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(config.WINDOW_WIDTH, config.WINDOW_HEIGHT, 1, 8)
+        self.background = Animator(self.background_sprites, 10)
 
     def enter(self):
         self.running = True
@@ -20,6 +23,7 @@ class LobbyState:
         self.running = False
      
     def update(self):
+        self.background.update()
         self.player.waiting_animation()
         server_message = self.net.get_last_response()
         # self.lobby_state += "." 
@@ -27,7 +31,7 @@ class LobbyState:
             self.check_for_match(server_message)
 
     def draw(self, screen):
-        screen.blit(self.background, (0, 0))
+        self.background.draw(screen)
         self.player.draw(screen)
         lobby_state = self.font.render(self.lobby_state, True, (255, 255, 255))
         rect = lobby_state.get_rect(center=(config.WINDOW_WIDTH - 80, config.WINDOW_HEIGHT - 20))

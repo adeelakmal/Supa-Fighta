@@ -1,5 +1,7 @@
 import pygame
 import config
+from animations.sprites import SpriteSheet
+from animations.animation import Animator
 
 class MainMenuState:
     def __init__(self, state_manager):
@@ -11,14 +13,16 @@ class MainMenuState:
             "settings":pygame.Rect((config.WINDOW_WIDTH/2)-100,160,200,50),
             "exit":pygame.Rect((config.WINDOW_WIDTH/2)-100,220,200,50)
         }
+        self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(config.WINDOW_WIDTH, config.WINDOW_HEIGHT, 1, 8)
+        self.background = Animator(self.background_sprites, 10)
     def enter(self):
         self.running = True
     def exit(self):
         self.running = False
     def update(self):
-        pass
+        self.background.update()
     def draw(self, screen: pygame.Surface):
-        screen.fill((255, 255, 255))
+        self.background.draw(screen)
         title_surface = self.title_font.render("Supa Fighta", True, (0, 0, 0))
         rect = title_surface.get_rect(center=(config.WINDOW_WIDTH //2 , 50)) # Center the title
         screen.blit(title_surface, rect)

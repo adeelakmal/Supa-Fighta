@@ -77,3 +77,6 @@ class Player:
 
     def draw(self, surface):
         self.player_animations[self.player_state].draw(surface, (self.player_x, self.player_y))
+    
+    def waiting_animation(self):
+        self.player_animations['idel'].update()

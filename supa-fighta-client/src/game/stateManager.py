@@ -1,5 +1,6 @@
 from game.states.mainMenu import MainMenuState
 from game.states.gameplayState import GameplayState
+from game.states.lobby import LobbyState
 
 class GameState:
     def __init__(self, net):
@@ -8,7 +9,7 @@ class GameState:
             "main_menu": MainMenuState(self),
             # "settings": SettingsState(),  
             "gameplay": GameplayState(net),
-            # "lobby": LobbyState()
+            "lobby": LobbyState(self, net)
         }
         self.current_state.enter()
     def change_state(self, new_state: str):

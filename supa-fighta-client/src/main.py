@@ -25,7 +25,9 @@ def main():
             gameState.draw(screen)
 
             pygame.display.flip()
-
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        
     finally:
         net.close()
         pygame.quit()

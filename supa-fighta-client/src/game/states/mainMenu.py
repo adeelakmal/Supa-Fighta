@@ -29,7 +29,7 @@ class MainMenuState:
         for button in self.buttons:
             result = button.handle_event(event)
             if result == "Join Lobby":
-                self.state_manager.change_state("lobby")
+                self.state_manager.change_state("gameplay")
             elif result == "Settings":
                 self.state_manager.change_state("settings")
             elif result == "Exit":

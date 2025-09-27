@@ -1,6 +1,8 @@
 from game.player import Player
 from game.opponent import Opponent
 from server.ws_client import WSClient
+from animations.sprites import SpriteSheet
+from animations.animation import Animator
 import config
 import pygame
 import time
@@ -11,7 +13,8 @@ class GameplayState:
         self.net = net
         self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20), net)
         self.opponent = Opponent(config.WINDOW_WIDTH, config.WINDOW_HEIGHT - (120 + 20), net)
-        self.background = pygame.image.load("./supa-fighta-client/assets/background.png").convert()
+        self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(config.WINDOW_WIDTH, config.WINDOW_HEIGHT, 1, 8)
+        self.background = Animator(self.background_sprites, 10)
         self._last_snapshot_time = time.time()
         self._current_time = time.time()
 
@@ -21,6 +24,7 @@ class GameplayState:
     def exit(self):
         self.running = False
     def update(self):
+        self.background.update()
         self.opponent.update()
         self.player.update()
         self._current_time = time.time()
@@ -30,7 +34,7 @@ class GameplayState:
             self._cleanup()
         
     def draw(self, screen: pygame.Surface):
-        screen.blit(self.background, (0, 0))
+        self.background.draw(screen)
         self.player.draw(screen)
         self.opponent.draw(screen)
 

@@ -34,7 +34,6 @@ class Player:
         keys = pygame.key.get_pressed()
         now = pygame.time.get_ticks()
 
-        moved = False
         self.player_state = 'idel' 
         self.velocity = 0
         

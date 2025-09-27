@@ -37,7 +37,7 @@ class MainMenuState:
                 for button, rect in self.buttons.items():
                     if rect.collidepoint(mouse_pos):
                         if button == "start_game":
-                            self.state_manager.change_state("lobby")
+                            self.state_manager.change_state("gameplay")
                         elif button == "settings":
                             self.state_manager.change_state("settings")
                         elif button == "exit":

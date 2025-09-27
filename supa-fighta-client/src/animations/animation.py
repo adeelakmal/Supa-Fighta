@@ -21,7 +21,7 @@ class Animator:
                     self.finished = True
             self.last_update = now 
     
-    def draw(self, surface, position):
+    def draw(self, surface, position=(0, 0)):
         sprite = self.sprites[self.current_frame]
         surface.blit(sprite, position)
 

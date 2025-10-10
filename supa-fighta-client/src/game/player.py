@@ -1,33 +1,18 @@
-from animations.sprites import SpriteSheet
-from animations.animation import Animator
+from loader import AssetLoader
 import pygame
-import config
 
 ACTIONABLE_STATES = ['dash', 'punch', 'parry']
 DASH_FACTOR = 2.5
 
 class Player:
     def __init__(self, x, y, net):
-        self.player_sprites = {
-            "idel": SpriteSheet("./supa-fighta-client/assets/Idel.png").get_sprites(120, 120, 1, 5),
-            "walk": SpriteSheet("./supa-fighta-client/assets/Walk.png").get_sprites(120, 120, 1, 5),
-            "dash": SpriteSheet("./supa-fighta-client/assets/Dash.png").get_sprites(120, 120, 1, 5),
-            "punch": SpriteSheet("./supa-fighta-client/assets/Punch.png").get_sprites(120, 120, 1, 9),
-            "parry": SpriteSheet("./supa-fighta-client/assets/Parry.png").get_sprites(120, 120, 1, 5),
-        }
-        self.player_animations = {
-            "idel": Animator(self.player_sprites["idel"], frame_rate=15, loop=True),
-            "walk": Animator(self.player_sprites["walk"], frame_rate=15, loop=True),
-            "dash": Animator(self.player_sprites["dash"], frame_rate=20, loop=False),
-            "punch": Animator(self.player_sprites["punch"], frame_rate=25, loop=False),
-            "parry": Animator(self.player_sprites["parry"], frame_rate=15, loop=False),
-        }
+        self.player_assets = AssetLoader()
         self.last_tap_time = {pygame.K_LEFT: 0, pygame.K_RIGHT: 0}
         self._inputs = []
         self.player_x = x
         self.player_y = y
         self.speed = 2
-        self.player_state ='idel'
+        self.player_state ='idle'
         self.velocity = 0
         self.rect = pygame.Rect(x, y, 120, 120)
         self.net = net
@@ -36,23 +21,22 @@ class Player:
         keys = pygame.key.get_pressed()
         now = pygame.time.get_ticks()
 
-        moved = False
-        self.player_state = 'idel' 
+        self.player_state = 'idle' 
         self.velocity = 0
         
         if keys[pygame.K_SPACE]:
             if self.player_state != 'punch':
                 self.player_state = 'punch'
-                self.player_animations['punch'].reset()
+                self.player_assets.get_animation('punch').reset()
         if keys[pygame.K_a]:
             if self.player_state != "parry":
                 self.player_state = "parry"
-                self.player_animations['parry'].reset()
+                self.player_assets.get_animation('parry').reset()
         if keys[pygame.K_LEFT]:
             delta_left_tap = now - self.last_tap_time[pygame.K_LEFT]
             if (30 < delta_left_tap < 200) and (self.player_state != 'dash'):
                 self.player_state = 'dash'
-                self.player_animations['dash'].reset()
+                self.player_assets.get_animation('dash').reset()
             else:
                 self.player_state = 'walk'
             self.velocity = -self.speed * ((DASH_FACTOR-0.5) if self.player_state == 'dash' else 1)
@@ -61,7 +45,7 @@ class Player:
             delta_right_tap = now - self.last_tap_time[pygame.K_RIGHT]
             if (30 < delta_right_tap < 200) and (self.player_state != 'dash'):
                 self.player_state = 'dash'
-                self.player_animations['dash'].reset()
+                self.player_assets.get_animation('dash').reset()
             else:
                 self.player_state = 'walk'
             self.velocity = self.speed * (DASH_FACTOR if self.player_state == 'dash' else 1)
@@ -69,12 +53,12 @@ class Player:
         self._inputs.append(self.player_state)
 
     def update(self):
-        self.player_animations[self.player_state].update()
+        self.player_assets.get_animation(self.player_state).update()
         self.player_x += self.velocity
         self.rect.x = self.player_x
         if self.player_state in ACTIONABLE_STATES:
-            if self.player_animations[self.player_state].is_finished():
-                self.player_state = 'idel'
+            if self.player_assets.get_animation(self.player_state).is_finished():
+                self.player_state = 'idle'
         else:
             self.handle_keys()
     
@@ -94,7 +78,7 @@ class Player:
         return False
 
     def draw(self, surface):
-        self.player_animations[self.player_state].draw(surface, (self.player_x, self.player_y))
+        self.player_assets.get_animation(self.player_state).draw(surface, (self.player_x, self.player_y))
     
     def waiting_animation(self):
-        self.player_animations['idel'].update()
+        self.player_assets.get_animation('idle').update()

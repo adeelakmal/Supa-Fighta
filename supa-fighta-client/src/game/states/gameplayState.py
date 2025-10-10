@@ -24,6 +24,8 @@ class GameplayState:
             snapshot = self._create_state_snapshot()
             self.net.send_snapshot(snapshot)
             self._cleanup()
+        if self.player1.check_collision(self.player2):
+            print("Collision detected!")
         
     def draw(self, screen: pygame.Surface):
         screen.blit(self.background, (0, 0))

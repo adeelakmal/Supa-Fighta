@@ -29,7 +29,9 @@ class Player:
         self.speed = 2
         self.player_state ='idel'
         self.velocity = 0
+        self.rect = pygame.Rect(x, y, 120, 120)
         self.net = net
+
     def handle_keys(self):
         keys = pygame.key.get_pressed()
         now = pygame.time.get_ticks()
@@ -69,11 +71,27 @@ class Player:
     def update(self):
         self.player_animations[self.player_state].update()
         self.player_x += self.velocity
+        self.rect.x = self.player_x
         if self.player_state in ACTIONABLE_STATES:
             if self.player_animations[self.player_state].is_finished():
                 self.player_state = 'idel'
         else:
             self.handle_keys()
+    
+    def check_collision(self, other_player):
+        if self.rect.colliderect(other_player.rect):
+            # Moving right
+            if self.velocity > 0:
+                self.player_x = other_player.player_x - 120
+            # Moving left
+            elif self.velocity < 0:
+                self.player_x = other_player.player_x + 120
+            
+            # Update rect position after collision resolution
+            self.rect.x = self.player_x
+            self.velocity = 0
+            return True
+        return False
 
     def draw(self, surface):
         self.player_animations[self.player_state].draw(surface, (self.player_x, self.player_y))

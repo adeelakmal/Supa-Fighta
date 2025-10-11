@@ -62,9 +62,10 @@ class Sprite:
         if self.hurtbox:
             self.hurtbox.x = position[0]
             self.hurtbox.y = position[1]
+        # Breaks the hitbox
         # if self.hitbox:
-        #     self.hitbox.x = position[0]
-        #     self.hitbox.y = position[1]
+        #     self.hitbox.x = position[0] + self.hitbox.x
+        #     self.hitbox.y = position[1] + self.hitbox.y
         surface.blit(self.image, position)
         if config.DEBUG:
             self.draw_debug(surface, position)

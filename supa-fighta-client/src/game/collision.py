@@ -1,31 +1,28 @@
 from game.player import Player
+from game.opponent import Opponent
 import pygame
 
 DEBUG = True
 
 class Collision:
-    def __init__(self, players: list[Player]):
-        self.players = players
-
-    def check_collisions(self):
-        player1, player2 = self.players
-        if self.is_colliding(player1, player2):
-            self.handle_collision(player1, player2)
-
-    def is_colliding(self, player1: Player, player2: Player) -> bool:
-        rect1 = pygame.Rect(player1.player_x, player1.player_y, 120, 120)
-        rect2 = pygame.Rect(player2.player_x, player2.player_y, 120, 120)
-        return rect1.colliderect(rect2)
-
-    def handle_collision(self, player1: Player, player2: Player):
-        if DEBUG:
-            print(f"Collision detected between Player {id(player1)} and Player {id(player2)}")
-        # Simple collision response: stop movement
-        if player1.velocity > 0:  # Moving right
-            player1.player_x = player2.player_x - 120
-        elif player1.velocity < 0:  # Moving left
-            player1.player_x = player2.player_x + 120
-        if player2.velocity > 0:  # Moving right
-            player2.player_x = player1.player_x - 120
-        elif player2.velocity < 0:  # Moving left
-            player2.player_x = player1.player_x + 120
+    def check_collision(player: Player, opponent: Opponent):
+        if not player.get_hurtbox() or not opponent.get_hurtbox():
+            return False
+        else:
+            player_hurtbox = player.get_hurtbox()
+            player_hitbox = player.get_hitbox()
+            opponent_hurtbox = opponent.get_hurtbox()
+            opponent_hitbox = opponent.get_hitbox()
+            if player_hurtbox.colliderect(opponent_hurtbox):
+                if DEBUG:
+                    print(f"Collision detected! Player Hurtbox: {player_hurtbox}, Opponent Hurtbox: {opponent_hurtbox}")
+                return True
+            elif player_hitbox and player_hitbox.colliderect(opponent_hurtbox):
+                if DEBUG:
+                    print(f"Player Wins! Player Hitbox: {player_hitbox}, Opponent Hurtbox: {opponent_hurtbox}")
+                return True
+            elif opponent_hitbox and opponent_hitbox.colliderect(player_hurtbox):
+                if DEBUG:
+                    print(f"Opponent Wins! Opponent Hitbox: {opponent_hitbox}, Player Hurtbox: {player_hurtbox}")
+                return True
+        return False

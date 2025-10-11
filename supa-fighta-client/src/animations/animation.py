@@ -23,7 +23,7 @@ class Animator:
     
     def draw(self, surface, position=(0, 0)):
         sprite = self.sprites[self.current_frame]
-        surface.blit(sprite, position)
+        sprite.draw(surface, position)
 
     def is_finished(self):
         return self.finished

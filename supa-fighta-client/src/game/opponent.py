@@ -27,4 +27,10 @@ class Opponent:
         self.opponent_assets.get_animation(self.opponent_state).draw(surface, (self.opponent_x, self.opponent_y))
     
     def walk_into_frame(self):
-        self.walking_in = True        
+        self.walking_in = True  
+
+    def get_hurtbox(self):
+        return self.opponent_assets.get_animation(self.opponent_state).sprites[self.opponent_assets.get_animation(self.opponent_state).current_frame].get_hurtbox()   
+
+    def get_hitbox(self):
+        return self.opponent_assets.get_animation(self.opponent_state).sprites[self.opponent_assets.get_animation(self.opponent_state).current_frame].get_hitbox()   

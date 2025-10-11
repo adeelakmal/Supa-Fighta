@@ -14,7 +14,9 @@ class LobbyState:
         self.lobby_state = "Waiting for a game"
         self.font = pygame.font.Font(None, 18)
         self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20), net)
-        self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(config.WINDOW_WIDTH, config.WINDOW_HEIGHT, 1, 8)
+        self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(
+            {"width": config.WINDOW_WIDTH, "height": config.WINDOW_HEIGHT, "rows": 1, "cols": 8, "hitbox": None, "hurtbox": None},
+        )
         self.background = Animator(self.background_sprites, 10)
 
     def enter(self):

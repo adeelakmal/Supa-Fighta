@@ -5,6 +5,7 @@ from server.ws_client import WSClient
 from game.player import Player
 from animations.sprites import SpriteSheet
 from animations.animation import Animator
+from type.sprite import SpriteProperties
 
 class LobbyState:
 
@@ -15,7 +16,12 @@ class LobbyState:
         self.font = pygame.font.Font(None, 18)
         self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20), net)
         self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(
-            {"width": config.WINDOW_WIDTH, "height": config.WINDOW_HEIGHT, "rows": 1, "cols": 8, "hitbox": None, "hurtbox": None},
+            SpriteProperties(
+                width=config.WINDOW_WIDTH,
+                height=config.WINDOW_HEIGHT,
+                rows=1,
+                cols=8,
+            )
         )
         self.background = Animator(self.background_sprites, 10)
 

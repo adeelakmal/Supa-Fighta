@@ -1,6 +1,8 @@
 import pygame
 from typing import List
 import config
+from type.sprite import SpriteProperties
+
 
 class SpriteSheet:
     def __init__(self, filename):
@@ -10,19 +12,19 @@ class SpriteSheet:
         sprite = pygame.Surface((width, height), pygame.SRCALPHA)
         sprite.blit(self.sheet, (0,0), (x, y, width, height))
         return sprite
-    def get_sprites(self, sprite_properties):
-        rows = sprite_properties.get('rows', 1)
-        cols = sprite_properties.get('cols', 1)
-        sprite_width = sprite_properties.get('width', None)
-        sprite_height = sprite_properties.get('height', None)
+    def get_sprites(self, sprite_properties: SpriteProperties):
+        rows = sprite_properties.rows
+        cols = sprite_properties.cols
+        sprite_width = sprite_properties.width
+        sprite_height = sprite_properties.height
         for row in range(rows):
             for col in range(cols):
                 x = col * sprite_width
                 y = row * sprite_height
                 sprite = Sprite(
                     image = self.get_sprite(x, y, sprite_width, sprite_height),
-                    hitbox = sprite_properties['hitbox'],
-                    hurtbox = sprite_properties['hurtbox'],
+                    hitbox = sprite_properties.hitbox,
+                    hurtbox = sprite_properties.hurtbox,
                 )
                 self.sprites.append(sprite)
         return self.sprites
@@ -34,8 +36,11 @@ class Sprite:
         self.image = image
         if hitbox:
             self.hitbox = pygame.Rect(hitbox[0], hitbox[1], hitbox[2], hitbox[3])
+            self.current_hitbox =  pygame.Rect(hitbox[0], hitbox[1], hitbox[2], hitbox[3])
         else:
             self.hitbox = None
+            self.current_hitbox = None
+
         if hurtbox:
             self.hurtbox=pygame.Rect(0, 0, hurtbox[0], hurtbox[1])
         else:
@@ -53,19 +58,18 @@ class Sprite:
         # Draw hitbox in red with alpha
         if self.hitbox:
             pygame.draw.rect(surface, (255, 0, 0), 
-                        pygame.Rect(position[0] + self.hitbox.x, 
-                                    position[1] + self.hitbox.y,
-                                    self.hitbox.width, 
-                                    self.hitbox.height), 1)
+                        pygame.Rect(self.current_hitbox.x, 
+                                    self.current_hitbox.y,
+                                    self.current_hitbox.width, 
+                                    self.current_hitbox.height), 1)
 
     def draw(self, surface: pygame.Surface, position):
         if self.hurtbox:
             self.hurtbox.x = position[0]
             self.hurtbox.y = position[1]
-        # Breaks the hitbox
-        # if self.hitbox:
-        #     self.hitbox.x = position[0] + self.hitbox.x
-        #     self.hitbox.y = position[1] + self.hitbox.y
+        if self.hitbox:
+            self.current_hitbox.x = position[0] + self.hitbox.x
+            self.current_hitbox.y = position[1] + self.hitbox.y
         surface.blit(self.image, position)
         if config.DEBUG:
             self.draw_debug(surface, position)
@@ -77,4 +81,4 @@ class Sprite:
         return self.hurtbox
     
     def get_hitbox(self):
-        return self.hitbox
+        return self.current_hitbox

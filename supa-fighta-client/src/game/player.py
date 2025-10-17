@@ -68,7 +68,6 @@ class Player:
         self.player_assets.get_animation('idle').update()
 
     def get_hurtbox(self):
-        return self.player_assets.get_animation(self.player_state).sprites[self.player_assets.get_animation(self.player_state).current_frame].get_hurtbox()
-    
+        return self.player_assets.get_hurtbox(self.player_state)
     def get_hitbox(self):
-        return self.player_assets.get_animation(self.player_state).sprites[self.player_assets.get_animation(self.player_state).current_frame].get_hitbox()
+        return self.player_assets.get_hitbox(self.player_state)

@@ -3,18 +3,24 @@ import config
 from animations.sprites import SpriteSheet
 from animations.animation import Animator
 from button import Button
+from type.sprite import SpriteProperties
 
 class MainMenuState:
     def __init__(self, state_manager):
         self.state_manager = state_manager
         self.title_font = pygame.font.Font(None,74)        
         self.buttons = [
-            Button(22,config.WINDOW_HEIGHT - 190,"Join Lobby"),
-            Button(22,config.WINDOW_HEIGHT - 150,"Settings"),
-            Button(25,config.WINDOW_HEIGHT - 110,"Exit")
+            Button(22, config.WINDOW_HEIGHT - 190, "Join Lobby"),
+            Button(22, config.WINDOW_HEIGHT - 150, "Settings"),
+            Button(25, config.WINDOW_HEIGHT - 110, "Exit")
         ]
         self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(
-            {"width": config.WINDOW_WIDTH, "height": config.WINDOW_HEIGHT, "rows": 1, "cols": 8, "hitbox": None, "hurtbox": None},
+            SpriteProperties(
+                width=config.WINDOW_WIDTH,
+                height=config.WINDOW_HEIGHT,
+                rows=1,
+                cols=8,
+            )
         )
         self.background = Animator(self.background_sprites, 6)
     def enter(self):

@@ -4,6 +4,7 @@ from game.collision import Collision
 from server.ws_client import WSClient
 from animations.sprites import SpriteSheet
 from animations.animation import Animator
+from type.sprite import SpriteProperties
 import config
 import pygame
 import time
@@ -15,7 +16,12 @@ class GameplayState:
         self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20), net)
         self.opponent = Opponent(config.WINDOW_WIDTH, config.WINDOW_HEIGHT - (120 + 20), net)
         self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(
-            {"width": config.WINDOW_WIDTH, "height": config.WINDOW_HEIGHT, "rows": 1, "cols": 8, "hitbox": None, "hurtbox": None},
+            SpriteProperties(
+                width=config.WINDOW_WIDTH,
+                height=config.WINDOW_HEIGHT,
+                rows=1,
+                cols=8,
+            )
         )
         self.background = Animator(self.background_sprites, 10)
         self._last_snapshot_time = time.time()

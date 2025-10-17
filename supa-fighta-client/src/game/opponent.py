@@ -81,7 +81,6 @@ class Opponent:
         self.walking_in = True
 
     def get_hurtbox(self):
-        return self.opponent_assets.get_animation(self.opponent_state).sprites[self.opponent_assets.get_animation(self.opponent_state).current_frame].get_hurtbox()   
-
+        return self.opponent_assets.get_hurtbox(self.opponent_state)
     def get_hitbox(self):
-        return self.opponent_assets.get_animation(self.opponent_state).sprites[self.opponent_assets.get_animation(self.opponent_state).current_frame].get_hitbox()
+        return self.opponent_assets.get_hitbox(self.opponent_state)

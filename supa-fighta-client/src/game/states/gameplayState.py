@@ -8,11 +8,12 @@ import pygame
 import time
 
 class GameplayState:
-    def __init__(self, net: WSClient):
+    def __init__(self, player: Player):
         self.running = True
-        self.net = net
-        self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20), net)
-        self.opponent = Opponent(config.WINDOW_WIDTH, config.WINDOW_HEIGHT - (120 + 20), net)
+        self.player = player
+        if player is None: # for testing purposes
+            self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
+        self.opponent = Opponent(config.WINDOW_WIDTH, config.WINDOW_HEIGHT - (120 + 20))
         self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(config.WINDOW_WIDTH, config.WINDOW_HEIGHT, 1, 8)
         self.background = Animator(self.background_sprites, 10)
         self._last_snapshot_time = time.time()
@@ -30,7 +31,7 @@ class GameplayState:
         self._current_time = time.time()
         if self._current_time - self._last_snapshot_time >= 0.1:
             snapshot = self._create_state_snapshot()
-            self.net.send_snapshot(snapshot)
+            self.player.net.send_snapshot(snapshot)
             self._cleanup()
         
     def draw(self, screen: pygame.Surface):

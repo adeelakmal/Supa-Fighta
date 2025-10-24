@@ -1,11 +1,13 @@
 from loader import AssetLoader
 import pygame
+import config
+from server.ws_client import WSClient
 
 ACTIONABLE_STATES = ['dash', 'punch', 'parry']
 DASH_FACTOR = 2.5
 
 class Player:
-    def __init__(self, x, y, net):
+    def __init__(self, x, y):
         self.player_assets = AssetLoader()
         self.last_tap_time = {pygame.K_LEFT: 0, pygame.K_RIGHT: 0}
         self._inputs = []
@@ -14,7 +16,7 @@ class Player:
         self.speed = 2
         self.player_state ='idle'
         self.velocity = 0
-        self.net = net
+        self.net = WSClient(config.WS_URL)
     def handle_keys(self):
         keys = pygame.key.get_pressed()
         now = pygame.time.get_ticks()

@@ -7,3 +7,4 @@ __pycache__/
 .DS_Store
 .idea/
 .vscode/
+supa-fighta-client/player_data.dat

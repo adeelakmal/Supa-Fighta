@@ -3,7 +3,7 @@ import config
 from loader import AssetLoader
 
 class Opponent:
-    def __init__(self, x, y, net):
+    def __init__(self, x, y):
         self.opponent_x = x
         self.opponent_y = y
         self.opponent_state = 'idle'

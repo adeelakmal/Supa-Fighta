@@ -1,10 +1,9 @@
 from game.player import Player
 from game.opponent import Opponent
-from game.collision import Collision
-from server.ws_client import WSClient
 from animations.sprites import SpriteSheet
-from animations.animation import Animator
 from type.sprite import SpriteProperties
+from animations.animation import Animator
+from game.collision import Collision
 import config
 import pygame
 import time
@@ -12,9 +11,10 @@ import time
 class GameplayState:
     def __init__(self, player: Player):
         self.running = True
-        self.net = net
-        self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20), net)
-        self.opponent = Opponent(config.WINDOW_WIDTH, config.WINDOW_HEIGHT - (120 + 20), net)
+        self.player = player
+        if player is None: # for testing purposes
+            self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
+        self.opponent = Opponent(config.WINDOW_WIDTH, config.WINDOW_HEIGHT - (120 + 20))
         self.background_sprites = SpriteSheet(
             SpriteProperties(
                 path="./supa-fighta-client/assets/background.png",

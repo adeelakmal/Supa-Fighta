@@ -15,8 +15,9 @@ class GameplayState:
         self.net = net
         self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20), net)
         self.opponent = Opponent(config.WINDOW_WIDTH, config.WINDOW_HEIGHT - (120 + 20), net)
-        self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(
+        self.background_sprites = SpriteSheet(
             SpriteProperties(
+                path="./supa-fighta-client/assets/background.png",
                 width=config.WINDOW_WIDTH,
                 height=config.WINDOW_HEIGHT,
                 rows=1,
@@ -49,7 +50,9 @@ class GameplayState:
     def draw(self, screen: pygame.Surface):
         self.background.draw(screen)
         self.opponent.draw(screen)
-        self.player.draw(screen)        
+        self.player.draw(screen)
+        if config.DEBUG:
+            Collision.debug_draw(screen, self.player, self.opponent)
 
     def _create_state_snapshot(self):
         snapshot = {

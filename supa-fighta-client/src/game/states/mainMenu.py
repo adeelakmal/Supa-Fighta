@@ -14,8 +14,9 @@ class MainMenuState:
             Button(22, config.WINDOW_HEIGHT - 150, "Settings"),
             Button(25, config.WINDOW_HEIGHT - 110, "Exit")
         ]
-        self.background_sprites = SpriteSheet("./supa-fighta-client/assets/background.png").get_sprites(
+        self.background_sprites = SpriteSheet(
             SpriteProperties(
+                path="./supa-fighta-client/assets/background.png",
                 width=config.WINDOW_WIDTH,
                 height=config.WINDOW_HEIGHT,
                 rows=1,

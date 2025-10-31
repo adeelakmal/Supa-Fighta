@@ -75,12 +75,31 @@ class Opponent:
                 self.handle_event(event="parry") #  for testing purposes only
 
     def draw(self, surface):
-        self.opponent_assets.get_animation(self.opponent_state).draw(surface, (self.opponent_x, self.opponent_y))
+        self.opponent_assets.get_animation(self.opponent_state).draw(surface, (self.opponent_x - 40, self.opponent_y)) # Pygames flip is weird can not set anchor point for flipping so i have to subtract half width of sprite from x position to render it in te correct position
     
     def walk_into_frame(self):
         self.walking_in = True
 
-    def get_hurtbox(self):
-        return self.opponent_assets.get_hurtbox(self.opponent_state)
-    def get_hitbox(self):
-        return self.opponent_assets.get_hitbox(self.opponent_state)
+    def get_hurtbox(self) -> pygame.Rect:
+        asset_hurtbox = self.opponent_assets.get_hurtbox(self.opponent_state)
+        if not asset_hurtbox:
+            return None
+        hurtbox = pygame.Rect(
+            self.opponent_x,
+            self.opponent_y,
+            asset_hurtbox[0],
+            asset_hurtbox[1],
+        )
+        return hurtbox
+
+    def get_hitbox(self) -> pygame.Rect:
+        asset_hitbox = self.opponent_assets.get_hitbox(self.opponent_state)
+        if not asset_hitbox:
+            return None
+        hitbox = pygame.Rect(
+            self.opponent_x + asset_hitbox[0],
+            self.opponent_y + asset_hitbox[1],
+            asset_hitbox[2],
+            asset_hitbox[3],
+        )
+        return hitbox

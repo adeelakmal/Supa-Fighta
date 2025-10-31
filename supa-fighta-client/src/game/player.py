@@ -67,7 +67,26 @@ class Player:
     def waiting_animation(self):
         self.player_assets.get_animation('idle').update()
 
-    def get_hurtbox(self):
-        return self.player_assets.get_hurtbox(self.player_state)
-    def get_hitbox(self):
-        return self.player_assets.get_hitbox(self.player_state)
+    def get_hurtbox(self) -> pygame.Rect:
+        asset_hurtbox = self.player_assets.get_hurtbox(self.player_state)
+        if not asset_hurtbox:
+            return None
+        hurtbox = pygame.Rect(
+            self.player_x,
+            self.player_y,
+            asset_hurtbox[0],
+            asset_hurtbox[1],
+        )
+        return hurtbox
+
+    def get_hitbox(self) -> pygame.Rect:
+        asset_hitbox = self.player_assets.get_hitbox(self.player_state)
+        if not asset_hitbox:
+            return None
+        hitbox = pygame.Rect(
+            self.player_x + asset_hitbox[0],
+            self.player_y + asset_hitbox[1],
+            asset_hitbox[2],
+            asset_hitbox[3],
+        )
+        return hitbox

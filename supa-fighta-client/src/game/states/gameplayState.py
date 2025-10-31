@@ -10,7 +10,7 @@ import pygame
 import time
 
 class GameplayState:
-    def __init__(self, net: WSClient):
+    def __init__(self, player: Player):
         self.running = True
         self.net = net
         self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20), net)
@@ -44,7 +44,7 @@ class GameplayState:
         self._current_time = time.time()
         if self._current_time - self._last_snapshot_time >= 0.1:
             snapshot = self._create_state_snapshot()
-            self.net.send_snapshot(snapshot)
+            self.player.net.send_snapshot(snapshot)
             self._cleanup()
         
     def draw(self, screen: pygame.Surface):

@@ -1,14 +1,14 @@
 import pygame, sys, config
-from server.ws_client import WSClient
 from game.stateManager import GameState
+from player_manager import load_player_id
 
 def main():
     pygame.init()
+    config.PLAYER_ID = load_player_id()
     screen = pygame.display.set_mode((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))
     pygame.display.set_caption("Supa Fighta")
-    clock = pygame.time.Clock()
-    net = WSClient(config.WS_URL)   
-    gameState = GameState(net)
+    clock = pygame.time.Clock() 
+    gameState = GameState()
    
     try:
         running = True
@@ -29,7 +29,6 @@ def main():
         print(f"An error occurred: {e}")
         
     finally:
-        net.close()
         pygame.quit()
         sys.exit()
 

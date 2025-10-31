@@ -6,7 +6,7 @@ ACTIONABLE_STATES = ['dash', 'punch', 'parry']
 DASH_FACTOR = 2.5
 
 class Opponent:
-    def __init__(self, x, y, net):
+    def __init__(self, x, y):
         self.opponent_x = x
         self.opponent_y = y
         self.opponent_state = 'idle'

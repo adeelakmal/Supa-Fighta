@@ -68,4 +68,4 @@ SPRITES = {
 
 # WebSocket settings
 WS_URL = "ws://localhost:8080"
-PLAYER_ID = "eecb1d48-7e94-4ce9-8b00-1c40e7ddf8e7"
+PLAYER_ID = None

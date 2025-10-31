@@ -6,15 +6,14 @@ from game.player import Player
 from animations.sprites import SpriteSheet
 from animations.animation import Animator
 from type.sprite import SpriteProperties
+from server.ws_client import WSClient
 
 class LobbyState:
 
-    def __init__(self, state_manager, net: WSClient):
+    def __init__(self, state_manager):
         self.state_manager = state_manager
-        self.net = net
         self.lobby_state = "Waiting for a game"
         self.font = pygame.font.Font(None, 18)
-        self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20), net)
         self.background_sprites = SpriteSheet(
             SpriteProperties(
                 path="./supa-fighta-client/assets/background.png",
@@ -24,17 +23,19 @@ class LobbyState:
                 cols=8,
             )
         )
+        self.player = None
         self.background = Animator(self.background_sprites, 10)
 
     def enter(self):
         self.running = True
+        self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
     def exit(self):
         self.running = False
      
     def update(self):
         self.background.update()
         self.player.waiting_animation()
-        server_message = self.net.get_last_response()
+        server_message = self.player.net.get_last_response()
         # self.lobby_state += "." 
         if server_message:
             self.check_for_match(server_message)
@@ -48,6 +49,9 @@ class LobbyState:
 
     def handle_event(self, event):
         pass
+
+    def get_player(self):
+        return self.player
     
     def check_for_match(self, server_message: Dict):
         if 'match_created' in server_message.get('type') and (server_message.get('player1', None) == config.PLAYER_ID or server_message.get('player2', None) == config.PLAYER_ID):

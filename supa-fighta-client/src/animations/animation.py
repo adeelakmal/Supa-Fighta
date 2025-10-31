@@ -1,8 +1,10 @@
 import pygame
+from animations.sprites import SpriteSheet
 
 class Animator:
-    def __init__(self, sprites, frame_rate, loop=True):
-        self.sprites = sprites
+    def __init__(self, spritesheet: SpriteSheet, frame_rate, loop=True, flipped=False):
+        self.spritesheet = spritesheet
+        self.sprites = spritesheet.get_sprites(flipped)
         self.frame_rate = frame_rate
         self.loop = loop
         self.current_frame = 0
@@ -23,7 +25,7 @@ class Animator:
     
     def draw(self, surface, position=(0, 0)):
         sprite = self.sprites[self.current_frame]
-        surface.blit(sprite, position)
+        sprite.draw(surface, position)
 
     def is_finished(self):
         return self.finished
@@ -31,3 +33,5 @@ class Animator:
         self.current_frame = 0
         self.finished = False
         self.last_update = pygame.time.get_ticks()
+    def get_current_sprite(self):
+        return self.sprites[self.current_frame]

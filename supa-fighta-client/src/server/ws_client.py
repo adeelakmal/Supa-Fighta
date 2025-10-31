@@ -3,7 +3,7 @@ import websocket
 import json
 import asyncio
 import config
-
+from player_manager import save_player_id
 
 class WSClient:
     """
@@ -18,7 +18,11 @@ class WSClient:
         self._response = None
         self._response_event = threading.Event()
         threading.Thread(target=self._start_async_recv_loop, daemon=True).start()
-        self.send({"type":'validate_player', "playerId": config.PLAYER_ID})
+        if config.PLAYER_ID:
+            self.send({"type":'validate_player', "playerId": config.PLAYER_ID})
+        else:
+            self.send({"type":'create_player'})
+            
 
     def send(self, payload: dict | None = None):
         """
@@ -51,6 +55,14 @@ class WSClient:
                     data = json.loads(msg)
                     self._response = data
                     self._response_event.set()
+                    
+                    if data.get('type') == 'player_created':
+                        player_id = data.get('playerId')
+                        if player_id:
+                            save_player_id(player_id)
+                            print(f"✅ New player ID saved: {player_id}")
+                            config.PLAYER_ID = player_id
+
                     #TODO: Add logic in the game state to correct any discrepancies
                     # If message recieved is a snapshot ack, dont need to do anything
                     # If message recieved asks to correct game state, do so

@@ -5,7 +5,7 @@ class PlayerState {
         this.x = x;
         this.y = y;
         this.vleocity = 0;
-        this.state = Inputs.IDEL
+        this.state = Inputs.IDEL;
     }
 }
 

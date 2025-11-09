@@ -37,10 +37,10 @@ class GameplayState:
         self.background.update()
         self.opponent.update()
         self.player.update()
-
-        if Collision.check_collision(self.player, self.opponent):
-            print("Collision handled by Collision class!")
-
+        
+        # TODO: show victory screen and go back to lobby
+        Collision.check_collision(self.player, self.opponent)
+        
         self._current_time = time.time()
         if self._current_time - self._last_snapshot_time >= 0.1:
             snapshot = self._create_state_snapshot()

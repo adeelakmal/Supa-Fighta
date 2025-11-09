@@ -48,7 +48,7 @@ SPRITES = {
         "cols": 9,
         "width": 120,
         "height": 120,
-        "hitbox": (80,40,30,20),
+        "hitbox": (80,40,30,20), # x_offset(player_width), y_offset, width, height
         "hurtbox": (80,120),
         "frame_rate": 25,
         "loop": False,

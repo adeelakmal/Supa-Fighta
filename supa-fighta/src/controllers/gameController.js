@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 const MatchesRepository = require('../repositories/matchesRepository');
 const PlayerState = require('../models/playerState');
-
+const DASH_FACTOR = 2.5
 
 class Game {
     constructor(matchId, player1, player2) {
@@ -74,21 +74,38 @@ class Game {
         const otherPos = this.positions[otherId];
         const moveStep = 1;
 
-        if (input === 'move_left') {
-            if (pos.x - moveStep < otherPos.x - this.playerDistance || pos.x - moveStep > otherPos.x + this.playerDistance) {
-                pos.x -= moveStep;
-            }
-        } else if (input === 'move_right') {
-            if (pos.x + moveStep > otherPos.x + this.playerDistance || pos.x + moveStep < otherPos.x - this.playerDistance) {
-                pos.x += moveStep;
-            }
+        switch (input) {
+            case 'move_left':
+                if (pos.x - moveStep < otherPos.x - this.playerDistance || pos.x - moveStep > otherPos.x + this.playerDistance) {
+                    pos.x -= moveStep;
+                }
+            case 'move_right':
+                if (pos.x + moveStep > otherPos.x + this.playerDistance || pos.x + moveStep < otherPos.x - this.playerDistance) {
+                    pos.x += moveStep;
+                }
+            case 'dash_left':
+                if (pos.x - moveStep < otherPos.x - this.playerDistance || pos.x - moveStep > otherPos.x + this.playerDistance) {
+                    pos.x -= moveStep * (DASH_FACTOR-0.5);
+                }
+            case 'dash_right':
+                if (pos.x + moveStep > otherPos.x + this.playerDistance || pos.x + moveStep < otherPos.x - this.playerDistance) {
+                    pos.x += moveStep * DASH_FACTOR;
+                }
+            case 'punch':
+                if(pos.x+80+30 > otherPos.x) {
+                    console.log(`Player ${playerId} punched Player ${otherId}`);
+                    this.winner = this.player1.id === playerId ? this.player1 : this.player2;
+                }
+            case 'parry':
+            default:
+                console.log("Unknown input:", input);
+                break
         }
     }
 
     validateState(playerId, snapshot) {
         const player_state  = snapshot.player;
         const { history, state, x, y } = player_state;
-        console.log("Validating state for player:", history, "x:", x, "y:", y);
         const serverPos = this.positions[playerId];
         history.forEach((input, index) => {
             this.processInput(playerId, input); 

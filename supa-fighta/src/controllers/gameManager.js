@@ -13,8 +13,9 @@ class GameManager {
 
     routeInput(lobby, playerId, snapshot) {
         const player = lobby.players.find(p =>  p.id === playerId);
+        if (player.matchId === null) return;
+
         const game = this.activeGames.find(g => g.matchId === player.match_id);
-        console.log("Routing input for player:", player.id, "in match:", player.match_id);
         if (game) {
             game.validateState(playerId, snapshot);
         }

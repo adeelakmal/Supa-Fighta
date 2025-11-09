@@ -54,7 +54,14 @@ class Player:
 
     def update(self):
         self.player_assets.get_animation(self.player_state).update()
-        self.player_x += self.velocity
+        new_x = self.player_x + self.velocity
+        sprite_width = 80
+        if new_x < 0:
+            new_x = 0
+        elif new_x > config.WINDOW_WIDTH - sprite_width:
+            new_x = config.WINDOW_WIDTH - sprite_width
+        self.player_x = new_x
+
         if self.player_state in ACTIONABLE_STATES:
             if self.player_assets.get_animation(self.player_state).is_finished():
                 self.player_state = 'idle'

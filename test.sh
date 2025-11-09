@@ -13,10 +13,12 @@ sleep 1
 
 # Run the Python client
 echo "Starting Python client..."
-./venv/Scripts/python.exe supa-fighta-client/src/main.py & PY_PID=$!
+./venv/Scripts/python.exe supa-fighta-client/src/main.py --datafile player_data.dat & PY_PID1=$!
+./venv/Scripts/python.exe supa-fighta-client/src/main.py --datafile player_data2.dat & PY_PID2=$!
 
 # Wait for the Python client to finish
-wait $PY_PID
+wait $PY_PID1
+wait $PY_PID2
 
 # Stop Node.js server when the Python client exits
 echo "Stopping Node.js server..."

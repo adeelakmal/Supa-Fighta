@@ -1,10 +1,10 @@
-import pygame, sys, config
+import pygame, sys, config, argparse
 from game.stateManager import GameState
 from player_manager import load_player_id
 
-def main():
+def main(PlayerDataFile):
     pygame.init()
-    config.PLAYER_ID = load_player_id()
+    config.PLAYER_ID = load_player_id(PlayerDataFile)
     screen = pygame.display.set_mode((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))
     pygame.display.set_caption("Supa Fighta")
     clock = pygame.time.Clock() 
@@ -33,4 +33,7 @@ def main():
         sys.exit()
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description="Supa Fighta Client")
+    parser.add_argument("--datafile", default="player_data.dat", help="Path to player data file")
+    args = parser.parse_args()
+    main(args.datafile)

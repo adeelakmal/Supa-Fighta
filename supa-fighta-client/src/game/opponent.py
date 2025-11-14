@@ -66,8 +66,16 @@ class Opponent:
         self.opponent_assets.get_animation(self.opponent_state).update()
         if self.walking_in:
             self.intro_walk()
-        else: 
-            self.opponent_x += self.velocity
+        else:
+            new_x = self.opponent_x + self.velocity
+            sprite_width = 80
+            if new_x < 0:
+                new_x = 0
+            elif new_x > config.WINDOW_WIDTH - sprite_width:
+                new_x = config.WINDOW_WIDTH - sprite_width
+            self.opponent_x = new_x
+
+            # self.opponent_x += self.velocity
             if self.opponent_state in ACTIONABLE_STATES:
                 if self.opponent_assets.get_animation(self.opponent_state).is_finished():
                     self.opponent_state = 'idle'

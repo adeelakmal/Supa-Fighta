@@ -35,9 +35,16 @@ class GameplayState:
         self.running = False
     def update(self):
         self.background.update()
+
+        if Collision.check_overlap(self.player, self.opponent):
+            self.player.speed = 0.7
+            self.opponent.opponent_x=self.player.player_x + 80
+        else:
+            self.player.speed = 2
+
         self.opponent.update()
-        self.player.update()
-        
+        self.player.update()     
+
         # TODO: show victory screen and go back to lobby
         Collision.check_collision(self.player, self.opponent)
         

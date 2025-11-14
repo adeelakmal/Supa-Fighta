@@ -58,8 +58,8 @@ class Player:
         sprite_width = 80
         if new_x < 0:
             new_x = 0
-        elif new_x > config.WINDOW_WIDTH - sprite_width:
-            new_x = config.WINDOW_WIDTH - sprite_width
+        elif new_x > config.WINDOW_WIDTH - sprite_width*2:
+            new_x = config.WINDOW_WIDTH - sprite_width*2
         self.player_x = new_x
 
         if self.player_state in ACTIONABLE_STATES:

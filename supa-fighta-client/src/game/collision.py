@@ -5,6 +5,12 @@ import pygame
 DEBUG = True
 
 class Collision:
+    def check_overlap(player: Player, opponent: Opponent) -> bool:
+        player_hurtbox = player.get_hurtbox()
+        opponent_hurtbox = opponent.get_hurtbox()
+        if player_hurtbox and opponent_hurtbox:
+            return player_hurtbox.colliderect(opponent_hurtbox)
+        return False
     def check_collision(player: Player, opponent: Opponent) -> bool:
 
         player_hurtbox = player.get_hurtbox()

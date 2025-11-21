@@ -75,7 +75,6 @@ class Opponent:
                 new_x = config.WINDOW_WIDTH - sprite_width
             self.opponent_x = new_x
 
-            # self.opponent_x += self.velocity
             if self.opponent_state in ACTIONABLE_STATES:
                 if self.opponent_assets.get_animation(self.opponent_state).is_finished():
                     self.opponent_state = 'idle'

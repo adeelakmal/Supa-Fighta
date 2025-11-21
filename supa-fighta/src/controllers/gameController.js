@@ -42,25 +42,6 @@ class Game {
     }
 
     tick() {
-        // Process inputs for both players
-        const inputs = {};
-        [this.player1.id, this.player2.id].forEach(pid => {
-            inputs[pid] = this.inputQueue[pid].shift();
-        });
-
-        [this.player1, this.player2].forEach(player => {
-            const input = this.inputQueue[player.id].shift();
-            if (input) {
-                this.processInput(player.id, input);
-                // Log input and position only when input is detected
-                console.log(
-                    `Player ${player.id} input: ${input} | Position: x=${this.positions[player.id].x}, y=${this.positions[player.id].y}`
-                );
-                player.ws.send(JSON.stringify({ type: 'input_ack', x: this.positions[player.id].x, y: this.positions[player.id].y }));
-                
-            }
-        });
-
         // Advance timer and check for end
         this.timer--;
         if (this.timer <= 0) {
@@ -75,32 +56,56 @@ class Game {
         const moveStep = 1;
 
         switch (input) {
-            case 'move_left':
+            case 'idle':
+                // do nothing
+                break;
+            case 'walk_left':
                 if (pos.x - moveStep < otherPos.x - this.playerDistance || pos.x - moveStep > otherPos.x + this.playerDistance) {
                     pos.x -= moveStep;
                 }
-            case 'move_right':
+                break;
+            case 'walk_right':
                 if (pos.x + moveStep > otherPos.x + this.playerDistance || pos.x + moveStep < otherPos.x - this.playerDistance) {
                     pos.x += moveStep;
                 }
+                break;
             case 'dash_left':
                 if (pos.x - moveStep < otherPos.x - this.playerDistance || pos.x - moveStep > otherPos.x + this.playerDistance) {
                     pos.x -= moveStep * (DASH_FACTOR-0.5);
                 }
+                break;
             case 'dash_right':
                 if (pos.x + moveStep > otherPos.x + this.playerDistance || pos.x + moveStep < otherPos.x - this.playerDistance) {
                     pos.x += moveStep * DASH_FACTOR;
                 }
+                break;
             case 'punch':
                 if(pos.x+80+30 > otherPos.x) {
                     console.log(`Player ${playerId} punched Player ${otherId}`);
                     this.winner = this.player1.id === playerId ? this.player1 : this.player2;
                 }
+                break;
             case 'parry':
+                break;
             default:
                 console.log("Unknown input:", input);
-                break
+                break;
         }
+    }
+
+    reversePosition(playerId, position) {
+        const serverPos = this.positions[playerId];
+        // Reverse the position so it makes the same from the opponent's view
+        return {
+            x: 640 - position.x,
+            y: position.y
+        };
+    }
+
+    sendToOpponent(playerId, message) {
+        const opponentId = playerId === this.player1.id ? this.player2.id : this.player1.id;
+        const opponentWs = opponentId === this.player1.id ? this.player1.ws : this.player2.ws;
+        opponentWs.send(JSON.stringify(message));
     }
 
     validateState(playerId, snapshot) {
@@ -110,7 +115,19 @@ class Game {
         history.forEach((input, index) => {
             this.processInput(playerId, input); 
         })
-        console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
+        if (Math.abs(x - serverPos.x) > 10 || Math.abs(y - serverPos.y) > 10) {
+            // console.warn(`Desync detected for player ${playerId}`);
+        }
+        // console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
+
+        // send response to opponent
+        let pos = this.reversePosition(playerId, serverPos);
+        let message = {
+            type: 'opponent_update',
+            position: pos,
+            current_state: history[history.length -1]
+        };
+        this.sendToOpponent(playerId, message);
     }
 
     async end(winner) {

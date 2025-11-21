@@ -39,10 +39,16 @@ class GameplayState:
         self.background.update()
 
         if Collision.check_overlap(self.player, self.opponent):
-            self.player.speed = 0.7
-            self.opponent.opponent_x=self.player.player_x + 80
+            if self.player.player_state!="idle":
+                self.player.speed = 0.7
+                self.opponent.opponent_x=self.player.player_x + 80
+            else:
+                self.opponent.speed = 0.7
+                self.player.player_x=self.opponent.opponent_x - 80
+
         else:
             self.player.speed = 2
+            self.opponent.speed = 2
 
         self.opponent.update()
         self.player.update()     

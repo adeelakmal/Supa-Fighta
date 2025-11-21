@@ -72,8 +72,8 @@ class Opponent:
         else:
             new_x = self.opponent_x + self.velocity
             sprite_width = 80
-            if new_x < 0:
-                new_x = 0
+            if new_x < sprite_width:
+                new_x = sprite_width
             elif new_x > config.WINDOW_WIDTH - sprite_width:
                 new_x = config.WINDOW_WIDTH - sprite_width
             self.opponent_x = new_x

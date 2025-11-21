@@ -2,7 +2,7 @@ import pygame, sys, config, argparse
 from game.stateManager import GameState
 from player_manager import load_player_id
 
-def main(PlayerDataFile):
+def main(PlayerDataFile="player_data.dat"):
     pygame.init()
     config.PLAYER_ID = load_player_id(PlayerDataFile)
     screen = pygame.display.set_mode((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))

@@ -17,10 +17,13 @@ class Opponent:
         self.walking_in = True
 
     def handle_event(self, event):
-        self.opponent_state = 'idle'
-        self.velocity = 0
 
         match event:
+            case "idle":
+                if self.opponent_state not in ACTIONABLE_STATES:
+                    self.opponent_state = 'idle'
+                    self.velocity = 0
+
             case "punch":
                 if self.opponent_state != 'punch':
                     self.opponent_state = "punch"
@@ -71,8 +74,6 @@ class Opponent:
             if self.opponent_state in ACTIONABLE_STATES:
                 if self.opponent_assets.get_animation(self.opponent_state).is_finished():
                     self.opponent_state = 'idle'
-            else:
-                self.handle_event(event="parry") #  for testing purposes only
 
     def draw(self, surface):
         self.opponent_assets.get_animation(self.opponent_state).draw(surface, (self.opponent_x - 40, self.opponent_y)) # Pygames flip is weird can not set anchor point for flipping so i have to subtract half width of sprite from x position to render it in te correct position

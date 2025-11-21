@@ -50,7 +50,12 @@ class Player:
                 self.player_state = 'walk'
             self.velocity = self.speed * (DASH_FACTOR if self.player_state == 'dash' else 1)
             self.last_tap_time[pygame.K_RIGHT] = now
-        self._inputs.append(self.player_state)
+        if self.player_state in ['walk', 'dash']:
+            player_state_mod = self.player_state + ('_left' if self.velocity > 0 else '_right')
+            self._inputs.append(player_state_mod)
+
+        else:
+            self._inputs.append(self.player_state)
 
     def update(self):
         self.player_assets.get_animation(self.player_state).update()

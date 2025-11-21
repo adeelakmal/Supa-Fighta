@@ -16,6 +16,7 @@ class WSClient:
         self.ws.connect(url)
         self._running = True
         self._response = None
+        self.last_opponent_update = None
         self._response_event = threading.Event()
         threading.Thread(target=self._start_async_recv_loop, daemon=True).start()
         if config.PLAYER_ID:
@@ -37,6 +38,9 @@ class WSClient:
 
     def get_last_response(self):
         return self._response
+    
+    def get_last_opponent_update(self):
+        return self.last_opponent_update
 
     def close(self):
         self._running = False
@@ -62,11 +66,13 @@ class WSClient:
                             save_player_id(player_id)
                             print(f"✅ New player ID saved: {player_id}")
                             config.PLAYER_ID = player_id
+                    if data.get('type') == 'opponent_update':
+                        self.last_opponent_update = data
 
                     #TODO: Add logic in the game state to correct any discrepancies
                     # If message recieved is a snapshot ack, dont need to do anything
                     # If message recieved asks to correct game state, do so
-                    print("Srv ▸", msg)
+                    # print("Srv ▸", msg)
             except websocket.WebSocketConnectionClosedException:
                 break
             except Exception:

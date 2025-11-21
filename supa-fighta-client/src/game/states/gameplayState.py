@@ -4,6 +4,7 @@ from animations.sprites import SpriteSheet
 from type.sprite import SpriteProperties
 from animations.animation import Animator
 from game.collision import Collision
+from server.ws_client import WSClient
 import config
 import pygame
 import time
@@ -12,6 +13,7 @@ class GameplayState:
     def __init__(self, player: Player):
         self.running = True
         self.player = player
+        # self.net = WSClient(config.WS_URL)
         if player is None: # for testing purposes
             self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
         self.opponent = Opponent(config.WINDOW_WIDTH, config.WINDOW_HEIGHT - (120 + 20))
@@ -46,6 +48,10 @@ class GameplayState:
             snapshot = self._create_state_snapshot()
             self.player.net.send_snapshot(snapshot)
             self._cleanup()
+        last_opponent_update = self.player.net.get_last_opponent_update()
+        if last_opponent_update and not self.opponent.walking_in:
+            opp_state = last_opponent_update.get("current_state", "idle")
+            self.opponent.handle_event(opp_state)
         
     def draw(self, screen: pygame.Surface):
         self.background.draw(screen)
@@ -61,7 +67,7 @@ class GameplayState:
                 "x": self.player.player_x,
                 "y": self.player.player_y,
                 "history": self.player._inputs,
-                "state": getattr(self.player, "player_state", "idel")
+                "state": getattr(self.player, "player_state", "idle")
             }
         }
         return snapshot

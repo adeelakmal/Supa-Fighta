@@ -14,7 +14,7 @@ class Player:
         self.player_x = x
         self.player_y = y
         self.speed = 2
-        self.player_state ='idle'
+        self.player_state ='wait'
         self.velocity = 0
         self.net = WSClient(config.WS_URL)
     def handle_keys(self):
@@ -77,7 +77,7 @@ class Player:
         self.player_assets.get_animation(self.player_state).draw(surface, (self.player_x, self.player_y))
     
     def waiting_animation(self):
-        self.player_assets.get_animation('idle').update()
+        self.player_assets.get_animation('wait').update()
 
     def get_hurtbox(self) -> pygame.Rect:
         asset_hurtbox = self.player_assets.get_hurtbox(self.player_state)

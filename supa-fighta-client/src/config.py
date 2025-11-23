@@ -64,6 +64,17 @@ SPRITES = {
         "frame_rate": 15,
         "loop": False,
     },
+    "wait": {
+        "path": "./supa-fighta-client/assets/Wait.png",
+        "rows": 1,
+        "cols": 7,
+        "width": 120,
+        "height": 120,
+        "hitbox": None,
+        "hurtbox": (80,120),
+        "frame_rate": 12,
+        "loop": True,
+    },
 }
 
 # WebSocket settings

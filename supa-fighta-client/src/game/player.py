@@ -4,6 +4,7 @@ import config
 from server.ws_client import WSClient
 
 ACTIONABLE_STATES = ['dash', 'punch', 'parry']
+NO_SFX_STATES = ['walk', 'idle', 'parry', 'dash', 'wait']
 DASH_FACTOR = 2.5
 
 class Player:
@@ -27,6 +28,7 @@ class Player:
         if keys[pygame.K_SPACE]:
             if self.player_state != 'punch':
                 self.player_state = 'punch'
+                # TODO: Use Player State to Fetch Assets
                 self.player_assets.get_animation('punch').reset()
         if keys[pygame.K_a]:
             if self.player_state != "parry":
@@ -59,6 +61,8 @@ class Player:
 
     def update(self):
         self.player_assets.get_animation(self.player_state).update()
+        if self.player_state not in NO_SFX_STATES:
+            self.player_assets.get_sound(self.player_state).play()
         new_x = self.player_x + self.velocity
         sprite_width = 80
         if new_x < 0:

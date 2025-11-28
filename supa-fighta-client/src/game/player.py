@@ -2,6 +2,7 @@ from loader import AssetLoader
 import pygame
 import config
 from server.ws_client import WSClient
+from sound_loader import SoundLoader
 
 ACTIONABLE_STATES = ['dash', 'punch', 'parry']
 NO_SFX_STATES = ['walk', 'idle', 'wait']
@@ -10,6 +11,7 @@ DASH_FACTOR = 2.5
 class Player:
     def __init__(self, x, y):
         self.player_assets = AssetLoader()
+        self.sound_loader = SoundLoader.get_instance()
         self.last_tap_time = {pygame.K_LEFT: 0, pygame.K_RIGHT: 0}
         self._inputs = []
         self.player_x = x
@@ -62,7 +64,7 @@ class Player:
     def update(self):
         self.player_assets.get_animation(self.player_state).update()
         if self.player_state not in NO_SFX_STATES:
-            self.player_assets.get_sound(self.player_state).play()
+            self.sound_loader.get_sound(self.player_state).play()
         new_x = self.player_x + self.velocity
         sprite_width = 80
         if new_x < 0:

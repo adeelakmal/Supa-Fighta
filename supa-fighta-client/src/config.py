@@ -88,6 +88,14 @@ SOUND = {
     "parry" : {
         "path": "./supa-fighta-client/assets/parry.wav"
     },
+    "button_hover" : {
+        "path": "./supa-fighta-client/assets/button_hover.wav",
+        "min_repeat_gap_ms": 50
+    },
+    "button_select" : {
+        "path": "./supa-fighta-client/assets/button_select.wav",
+        "min_repeat_gap_ms": 250
+    }
 }
 
 # WebSocket settings

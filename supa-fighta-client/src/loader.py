@@ -2,7 +2,6 @@ import config
 from animations.sprites import SpriteSheet
 from animations.animation import Animator
 from type.sprite import SpriteProperties
-from animations.sound import Sound
 
 class AssetLoader:
     def __init__(self, flipped=False):
@@ -10,11 +9,7 @@ class AssetLoader:
         for name, properties in config.SPRITES.items():
             properties = SpriteProperties(**properties)
             self.spritesheet = SpriteSheet(properties)
-            self.animations[name] = Animator(self.spritesheet, frame_rate=properties.frame_rate, loop=properties.loop, flipped=flipped)
-        self.sound = {}
-        for name, properties in config.SOUND.items():
-            path = properties["path"]
-            self.sound[name] = Sound(name, path) 
+            self.animations[name] = Animator(self.spritesheet, frame_rate=properties.frame_rate, loop=properties.loop, flipped=flipped)     
 
     def get_animation(self, name: str) -> Animator:
         return self.animations.get(name)
@@ -30,6 +25,3 @@ class AssetLoader:
         if animator and animator.spritesheet:
             return animator.spritesheet.properties.hurtbox
         return None
-    
-    def get_sound(self, name: str) -> Sound:
-        return self.sound.get(name)

@@ -53,7 +53,7 @@ class Player:
             self.velocity = self.speed * (DASH_FACTOR if self.player_state == 'dash' else 1)
             self.last_tap_time[pygame.K_RIGHT] = now
         if self.player_state in ['walk', 'dash']:
-            player_state_mod = self.player_state + ('_left' if self.velocity > 0 else '_right')
+            player_state_mod = self.player_state + ('_right' if self.velocity > 0 else '_left')
             self._inputs.append(player_state_mod)
 
         else:

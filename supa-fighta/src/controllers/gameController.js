@@ -13,8 +13,8 @@ class Game {
 
         // Use PlayerState objects
         this.positions = {
-            [player1.id]: new PlayerState(320, 180),
-            [player2.id]: new PlayerState(5, 0)
+            [player1.id]: new PlayerState(200, 220),
+            [player2.id]: new PlayerState(200, 220)
         };
         this.actions = {
             [player1.id]: 'idle',
@@ -27,7 +27,8 @@ class Game {
         this.timer = 60 * 60; // 60 seconds at 60Hz
         this.winner = null;
         this.interval = null;
-        this.playerDistance = 1; // Minimum allowed distance between players
+        this.moveStep = 2;
+
     }
 
     start() {
@@ -52,35 +53,54 @@ class Game {
     processInput(playerId, input) {
         const otherId = playerId === this.player1.id ? this.player2.id : this.player1.id;
         const pos = this.positions[playerId];
-        const otherPos = this.positions[otherId];
-        const moveStep = 1;
+        let otherPos = this.positions[otherId];
+        let reversedOtherPos = this.reversePosition(otherPos);
+        // console.log(`Reversed opponent position for processing:`, otherPos);
 
         switch (input) {
             case 'idle':
                 // do nothing
                 break;
             case 'walk_left':
-                if (pos.x - moveStep < otherPos.x - this.playerDistance || pos.x - moveStep > otherPos.x + this.playerDistance) {
-                    pos.x -= moveStep;
+                if ( pos.x - this.moveStep > 0 ) {
+                    pos.x -= this.moveStep;
+                }
+                else{
+                    pos.x = 0;
                 }
                 break;
             case 'walk_right':
-                if (pos.x + moveStep > otherPos.x + this.playerDistance || pos.x + moveStep < otherPos.x - this.playerDistance) {
-                    pos.x += moveStep;
+                if ( pos.x + this.moveStep < reversedOtherPos.x - 80 ) {
+                    pos.x += this.moveStep;
+                }
+                else if ( pos.x + this.moveStep > 640 - (80*2) ) {
+                    console.log("right side limit reached");
+                    pos.x = 640 - (80*2);
+                }
+                else {
+                    // else players are definitely overlapping so we add pushing logic here
+                    console.log("players pushing");
+                    this.moveStep = 0.7;
+                    pos.x = +(pos.x + this.moveStep).toFixed(1);
+                    // console.log(`Player ${playerId} position after push: ${pos.x}`);
+                    reversedOtherPos.x = Math.min(640 - 80, +(pos.x + 80).toFixed(1));
+                    otherPos.x = this.reversePosition(reversedOtherPos).x;
+                    this.moveStep = 2;
+                  
                 }
                 break;
             case 'dash_left':
-                if (pos.x - moveStep < otherPos.x - this.playerDistance || pos.x - moveStep > otherPos.x + this.playerDistance) {
-                    pos.x -= moveStep * (DASH_FACTOR-0.5);
+                if (pos.x - this.moveStep < reversedOtherPos.x || pos.x - this.moveStep > reversedOtherPos.x ) {
+                    pos.x -= this.moveStep * (DASH_FACTOR-0.5);
                 }
                 break;
             case 'dash_right':
-                if (pos.x + moveStep > otherPos.x + this.playerDistance || pos.x + moveStep < otherPos.x - this.playerDistance) {
-                    pos.x += moveStep * DASH_FACTOR;
+                if (pos.x + this.moveStep > reversedOtherPos.x || pos.x + this.moveStep < reversedOtherPos.x ) {
+                    pos.x += this.moveStep * DASH_FACTOR;
                 }
                 break;
             case 'punch':
-                if(pos.x+80+30 > otherPos.x) {
+                if(pos.x+80+30 > reversedOtherPos.x) {
                     console.log(`Player ${playerId} punched Player ${otherId}`);
                     this.winner = this.player1.id === playerId ? this.player1 : this.player2;
                 }
@@ -93,13 +113,23 @@ class Game {
         }
     }
 
-    reversePosition(playerId, position) {
-        const serverPos = this.positions[playerId];
-        // Reverse the position so it makes the same from the opponent's view
+    reversePosition(position) {
+        // Reverse the position so it makes the same from the opponent's view 80 = sprite width, 120 = ofest p1 starts at from
         return {
-            x: 640 - position.x,
+            x: 640 - (position.x + 80),
             y: position.y
         };
+    }
+    reverseState(state) {
+        // Reverse the state so it makes the same from the opponent's view
+        // if last 4 characters are "left", change them to "right"
+        if (state.slice(-4) === 'left') {
+            return state.slice(0, -4) + 'right';
+        }
+        if (state.slice(-5) === 'right'){ 
+           return state.slice(0, -5) + 'left';
+        }
+        return state;
     }
 
     sendToOpponent(playerId, message) {
@@ -115,17 +145,19 @@ class Game {
         history.forEach((input, index) => {
             this.processInput(playerId, input); 
         })
-        if (Math.abs(x - serverPos.x) > 10 || Math.abs(y - serverPos.y) > 10) {
-            // console.warn(`Desync detected for player ${playerId}`);
+        if (Math.abs(x - serverPos.x) > 10) {
+            // console.warn(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}`);
         }
-        // console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
+        console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
 
         // send response to opponent
         let pos = this.reversePosition(playerId, serverPos);
+        let op_state = this.reverseState(history[history.length - 1]);
+        
         let message = {
             type: 'opponent_update',
             position: pos,
-            current_state: history[history.length -1]
+            current_state: op_state
         };
         this.sendToOpponent(playerId, message);
     }

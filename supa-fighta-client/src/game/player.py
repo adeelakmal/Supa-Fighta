@@ -4,7 +4,7 @@ import config
 from server.ws_client import WSClient
 
 ACTIONABLE_STATES = ['dash', 'punch', 'parry']
-NO_SFX_STATES = ['walk', 'idle', 'parry', 'dash', 'wait']
+NO_SFX_STATES = ['walk', 'idle', 'wait']
 DASH_FACTOR = 2.5
 
 class Player:

@@ -105,7 +105,7 @@ class Opponent:
         if not asset_hitbox:
             return None
         hitbox = pygame.Rect(
-            self.opponent_x + asset_hitbox[0],
+            self.opponent_x - asset_hitbox[0]+50,
             self.opponent_y + asset_hitbox[1],
             asset_hitbox[2],
             asset_hitbox[3],

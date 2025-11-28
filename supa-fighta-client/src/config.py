@@ -77,6 +77,19 @@ SPRITES = {
     },
 }
 
+# SOUND EFFECTS
+SOUND = {
+    "punch" : {
+        "path": "./supa-fighta-client/assets/punch.wav"
+    },
+    "dash" : {
+        "path": "./supa-fighta-client/assets/dash.wav"
+    },
+    "parry" : {
+        "path": "./supa-fighta-client/assets/parry.wav"
+    },
+}
+
 # WebSocket settings
 WS_URL = "ws://localhost:8080"
 PLAYER_ID = None

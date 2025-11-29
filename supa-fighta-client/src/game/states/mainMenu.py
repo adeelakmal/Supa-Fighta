@@ -4,6 +4,7 @@ from animations.sprites import SpriteSheet
 from animations.animation import Animator
 from button import Button
 from type.sprite import SpriteProperties
+from sound_loader import SoundLoader
 
 class MainMenuState:
     def __init__(self, state_manager):
@@ -24,8 +25,11 @@ class MainMenuState:
             )
         )
         self.background = Animator(self.background_sprites, 6)
+        self.sound_loader = SoundLoader.get_instance()
     def enter(self):
         self.running = True
+        pygame.mixer.music.load(config.MUSIC["menu"])
+        pygame.mixer.music.play(-1,0,0)
     def exit(self):
         self.running = False
     def update(self):

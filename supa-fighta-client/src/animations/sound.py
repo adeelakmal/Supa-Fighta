@@ -1,14 +1,14 @@
 import pygame
 
 class Sound:
-    def __init__(self, name, path, min_repeat_gap_ms: int = 500):
+    def __init__(self, name, path, min_repeat):
         self.name = name
         self.path = path
         self.audio = pygame.mixer.Sound(path)
         self._channel = None
         self._played = False
         self._last_play_ms = 0
-        self._min_repeat_gap_ms = int(min_repeat_gap_ms)
+        self._min_repeat_gap_ms = min_repeat
 
     def play(self, force: bool = False):
         now = pygame.time.get_ticks()

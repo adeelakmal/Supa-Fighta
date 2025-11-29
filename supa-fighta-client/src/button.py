@@ -1,4 +1,5 @@
 import pygame
+from sound_loader import SoundLoader
 
 class Button:
     def __init__(self, x, y, text, font_color=(216, 138, 97)):
@@ -9,6 +10,7 @@ class Button:
         self.is_hovered = False
         self.shadow_color = (23, 23, 23)
         self.shadow_offset = 1
+        self.sound_loader = SoundLoader.get_instance()
 
     def draw(self, screen):
         # Order of drawing matters, shadow first
@@ -22,8 +24,11 @@ class Button:
         if event.type == pygame.MOUSEMOTION:
             self.is_hovered = self.rect.collidepoint(event.pos)
             self.font_color = (244, 186, 98) if self.is_hovered else (216, 138, 97)
+            if self.is_hovered:
+                self.sound_loader.get_sound("button_hover").play()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if self.is_hovered and event.button == 1:
+                self.sound_loader.get_sound("button_select").play()
                 return self.text
         return None
 

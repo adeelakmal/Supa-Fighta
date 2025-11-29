@@ -30,7 +30,9 @@ class GameplayState:
         self._last_snapshot_time = time.time()
         self._current_time = time.time()
 
-    def enter(self):
+    def enter(self):        
+        pygame.mixer.music.load(config.MUSIC["fight"])
+        pygame.mixer.music.play(-1,0,0)
         self.opponent.walk_into_frame()
         self.running = True
     def exit(self):

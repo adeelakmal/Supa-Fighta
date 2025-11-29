@@ -98,6 +98,12 @@ SOUND = {
     }
 }
 
+# BACKGROUND MUSIC
+MUSIC = {
+    "menu" : "./supa-fighta-client/assets/menu_music.wav",
+    "fight" : "./supa-fighta-client/assets/fight_music.wav"
+}
+
 # WebSocket settings
 WS_URL = "ws://localhost:8080"
 PLAYER_ID = None

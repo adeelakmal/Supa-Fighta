@@ -25,7 +25,6 @@ class Button:
             self.is_hovered = self.rect.collidepoint(event.pos)
             self.font_color = (244, 186, 98) if self.is_hovered else (216, 138, 97)
             if self.is_hovered:
-                # print("Hovering over button:", self.text)
                 self.sound_loader.get_sound("button_hover").play()
         elif event.type == pygame.MOUSEBUTTONDOWN:
             if self.is_hovered and event.button == 1:

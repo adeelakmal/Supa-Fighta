@@ -73,7 +73,6 @@ class GameplayState:
             self.opponent.handle_event(opp_state)
     
     def draw_game_over(self, surface):
-        print("Game Over drawn on screen.")
         font = pygame.font.SysFont(None, 74)
         text = font.render("Game Over", True, (255, 0, 0))
         surface.blit(text, (config.WINDOW_WIDTH // 2 - text.get_width() // 2, config.WINDOW_HEIGHT // 4))

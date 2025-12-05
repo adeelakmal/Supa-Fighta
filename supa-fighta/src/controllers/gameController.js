@@ -140,13 +140,30 @@ class Game {
 
     validateState(playerId, snapshot) {
         const player_state  = snapshot.player;
-        const { history, state, x, y } = player_state;
+        const { history, state} = player_state;
+        let x =player_state.x;
+        let y =player_state.y;
         const serverPos = this.positions[playerId];
         history.forEach((input, index) => {
             this.processInput(playerId, input); 
         })
         if (Math.abs(x - serverPos.x) > 10) {
-            // console.warn(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}`);
+            console.log(`Player ${playerId} position before correction: x=${x}, server x=${serverPos.x}`);
+            console.warn(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}`);
+            const corrected_x = serverPos.x+x/2;
+            serverPos.x = corrected_x;
+            // x=corrected_x;
+            if (playerId === this.player1.id) {
+                this.player1.ws.send(JSON.stringify({type: 'correction', position: corrected_x}));
+            } else {
+                this.player2.ws.send(JSON.stringify({type: 'correction', position: corrected_x}));
+            }            
+        } else {
+            if (playerId === this.player1.id) {
+                this.player1.ws.send(JSON.stringify({type: 'correction', position: -1}));
+            } else {
+                this.player2.ws.send(JSON.stringify({type: 'correction', position: -1}));
+            }
         }
         console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
 

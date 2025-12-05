@@ -108,3 +108,6 @@ class Player:
             asset_hitbox[3],
         )
         return hitbox
+    
+    def reset_position(self, x):
+        self.player_x = x

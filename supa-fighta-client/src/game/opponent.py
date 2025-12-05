@@ -65,6 +65,9 @@ class Opponent:
             self.opponent_assets.get_animation('walk').reset()
             self.walking_in = False
 
+    def reset_position(self, x):
+        self.opponent_x = x
+
     def update(self):
         self.opponent_assets.get_animation(self.opponent_state).update()
         if self.walking_in:

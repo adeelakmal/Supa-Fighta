@@ -36,7 +36,6 @@ class LobbyState:
         self.background.update()
         self.player.waiting_animation()
         server_message = self.player.net.get_last_response()
-        # self.lobby_state += "." 
         if server_message:
             self.check_for_match(server_message)
 

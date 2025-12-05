@@ -70,7 +70,7 @@ class Game {
                 }
                 break;
             case 'walk_right':
-                if ( pos.x + this.moveStep < reversedOtherPos.x - 80 ) {
+                if ( pos.x + this.moveStep <= reversedOtherPos.x - 80 ) {
                     pos.x += this.moveStep;
                 }
                 else if ( pos.x + this.moveStep > 640 - (80*2) ) {
@@ -141,36 +141,24 @@ class Game {
     validateState(playerId, snapshot) {
         const player_state  = snapshot.player;
         const { history, state} = player_state;
-        let x =player_state.x;
-        let y =player_state.y;
+        let x = player_state.x;
         const serverPos = this.positions[playerId];
         history.forEach((input, index) => {
             this.processInput(playerId, input); 
         })
         if (Math.abs(x - serverPos.x) > 10) {
             console.log(`Player ${playerId} position before correction: x=${x}, server x=${serverPos.x}`);
-            console.warn(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}`);
-            const corrected_x = serverPos.x+x/2;
+            const corrected_x = (serverPos.x+x)/2;
             serverPos.x = corrected_x;
-            // x=corrected_x;
-            if (playerId === this.player1.id) {
-                this.player1.ws.send(JSON.stringify({type: 'correction', position: corrected_x}));
-            } else {
-                this.player2.ws.send(JSON.stringify({type: 'correction', position: corrected_x}));
-            }            
-        } else {
-            if (playerId === this.player1.id) {
-                this.player1.ws.send(JSON.stringify({type: 'correction', position: -1}));
-            } else {
-                this.player2.ws.send(JSON.stringify({type: 'correction', position: -1}));
-            }
-        }
-        console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
+            console.log(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}, correcting to x=${corrected_x}`);
+            const target = playerId === this.player1.id ? this.player1 : this.player2;
+            target.ws.send(JSON.stringify({type: 'correction', position: corrected_x}));
+        } 
+        // console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
 
         // send response to opponent
         let pos = this.reversePosition(playerId, serverPos);
         let op_state = this.reverseState(history[history.length - 1]);
-        
         let message = {
             type: 'opponent_update',
             position: pos,

@@ -68,10 +68,9 @@ class GameplayState:
             opp_state = last_opponent_update.get("current_state", "idle")
             self.opponent.handle_event(opp_state)
         last_player_correction = self.player.net.get_last_player_correction()
-        if last_player_correction != -1:
+        if last_player_correction:
             print(f"Applying correction to player position: {last_player_correction}")
-            # self.player.reset_position(last_player_correction)
-            # self.opponent.reset_position(config.WINDOW_WIDTH-(last_player_correction+80))
+            self.player.reset_position(last_player_correction)
         
     def draw(self, screen: pygame.Surface):
         self.background.draw(screen)

@@ -17,7 +17,7 @@ class WSClient:
         self._running = True
         self._response = None
         self.last_opponent_update = None
-        self.last_player_correction = -1
+        self.last_player_correction = None
         self._response_event = threading.Event()
         threading.Thread(target=self._start_async_recv_loop, daemon=True).start()
         if config.PLAYER_ID:

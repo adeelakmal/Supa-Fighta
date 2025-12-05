@@ -122,12 +122,15 @@ class Game {
     }
     reverseState(state) {
         // Reverse the state so it makes the same from the opponent's view
-        // if last 4 characters are "left", change them to "right"
-        if (state.slice(-4) === 'left') {
-            return state.slice(0, -4) + 'right';
-        }
-        if (state.slice(-5) === 'right'){ 
-           return state.slice(0, -5) + 'left';
+        if (!state) return state;
+        const words = state.split('_');
+        if (words.length > 1) {
+            if (words[1] === 'left') {
+                words[1] = 'right';
+            } else {
+                words[1] = 'left';
+            }
+            return words.join('_');
         }
         return state;
     }

@@ -123,17 +123,14 @@ class Game {
     reverseState(state) {
         // Reverse the state so it makes the same from the opponent's view
         if (!state) return state;
-        if (state.split('_').length > 1) {
-            switch (state) {
-                case 'walk_left':
-                    return 'walk_right';
-                case 'walk_right':
-                    return 'walk_left';
-                case 'dash_left':
-                    return 'dash_right';
-                case 'dash_right':
-                    return 'dash_left';
+        const words = state.split('_');
+        if (words.length > 1) {
+            if (words[1] === 'left') {
+                words[1] = 'right';
+            } else {
+                words[1] = 'left';
             }
+            return words.join('_');
         }
         return state;
     }

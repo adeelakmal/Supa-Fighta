@@ -68,7 +68,7 @@ class Opponent:
             self.opponent_assets.get_animation('walk').reset()
             self.walking_in = False
 
-    def reset_position(self, x):
+    def reset_position(self, x, player_speed):
         # Minimal implementation: set a clamped target and let update() step toward it
         sprite_width = 80
         clamped = max(sprite_width, min(config.WINDOW_WIDTH - sprite_width, x))
@@ -81,7 +81,8 @@ class Opponent:
             return
         self.target_x = clamped
         self.moving_to_target = True
-        self.opponent_state = 'walk'
+        if player_speed > 2:
+            self.opponent_state = 'walk'
         self.velocity = self.speed if self.target_x > self.opponent_x else -self.speed
 
     def update(self):

@@ -68,7 +68,7 @@ class GameplayState:
             opp_state = last_opponent_update.get("current_state", "idle")
             opp_position = last_opponent_update.get("position").get("x", self.opponent.opponent_x)
             self.opponent.handle_event(opp_state)
-            self.opponent.reset_position(opp_position)
+            self.opponent.reset_position(opp_position, self.player.speed) #using player speed to judge if the opponent is being pushed
         last_player_correction = self.player.net.get_last_player_correction()
         if last_player_correction:
             # print(f"Applying correction to player position: {last_player_correction}")

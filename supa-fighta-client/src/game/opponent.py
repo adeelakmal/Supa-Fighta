@@ -15,6 +15,9 @@ class Opponent:
         self.velocity = 0        
         # self.net = net
         self.walking_in = True
+        # Simple smooth-move state for reset_position
+        self.target_x = None
+        self.moving_to_target = False
 
     def handle_event(self, event):
 
@@ -66,20 +69,48 @@ class Opponent:
             self.walking_in = False
 
     def reset_position(self, x):
-        self.opponent_x = x
+        # Minimal implementation: set a clamped target and let update() step toward it
+        sprite_width = 80
+        clamped = max(sprite_width, min(config.WINDOW_WIDTH - sprite_width, x))
+        if clamped == self.opponent_x:
+            # already at target
+            self.target_x = None
+            self.moving_to_target = False
+            self.velocity = 0
+            self.opponent_state = 'idle'
+            return
+        self.target_x = clamped
+        self.moving_to_target = True
+        self.opponent_state = 'walk'
+        self.velocity = self.speed if self.target_x > self.opponent_x else -self.speed
 
     def update(self):
         self.opponent_assets.get_animation(self.opponent_state).update()
         if self.walking_in:
             self.intro_walk()
         else:
-            new_x = self.opponent_x + self.velocity
             sprite_width = 80
-            if new_x < sprite_width:
-                new_x = sprite_width
-            elif new_x > config.WINDOW_WIDTH - sprite_width:
-                new_x = config.WINDOW_WIDTH - sprite_width
-            self.opponent_x = new_x
+            if self.moving_to_target and self.target_x is not None:
+                dist = self.target_x - self.opponent_x
+                if abs(dist) <= abs(self.speed):
+                    self.opponent_x = self.target_x
+                    self.moving_to_target = False
+                    self.target_x = None
+                    self.velocity = 0
+                    self.opponent_state = 'idle'
+                else:
+                    step = self.speed if dist > 0 else -self.speed
+                    new_x = self.opponent_x + step
+                    new_x = max(sprite_width, min(config.WINDOW_WIDTH - sprite_width, new_x))
+                    self.opponent_x = new_x
+                    self.velocity = step
+            else:
+                new_x = self.opponent_x + self.velocity
+                if new_x < sprite_width:
+                    new_x = sprite_width
+                elif new_x > config.WINDOW_WIDTH - sprite_width:
+                    new_x = config.WINDOW_WIDTH - sprite_width
+                self.opponent_x = new_x
 
             if self.opponent_state in ACTIONABLE_STATES:
                 if self.opponent_assets.get_animation(self.opponent_state).is_finished():

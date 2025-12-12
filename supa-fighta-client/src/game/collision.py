@@ -23,12 +23,14 @@ class Collision:
                 print(f"Player Wins! Player Hitbox: {player_hitbox}, Opponent Hurtbox: {opponent_hurtbox}")
             opponent.set_state('hurt')
             opponent.set_hurt(opponent.opponent_x)
+            player.set_state('idle')
             return True
         elif opponent_hitbox and opponent_hitbox.colliderect(player_hurtbox):
             if DEBUG:
                 print(f"Opponent Wins! Opponent Hitbox: {opponent_hitbox}, Player Hurtbox: {player_hurtbox}")
             player.set_state('hurt')
             player.set_hurt(player.player_x)
+            opponent.set_state('idle')
             return True
         return False
     def debug_draw(surface: pygame.Surface, player: Player, opponent: Opponent):

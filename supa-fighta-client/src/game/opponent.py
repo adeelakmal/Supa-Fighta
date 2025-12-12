@@ -3,7 +3,7 @@ import config
 from loader import AssetLoader
 
 ACTIONABLE_STATES = ['dash', 'punch', 'parry']
-END_STATES = ['hurt']
+END_STATES = ['hurt', 'win']
 DASH_FACTOR = 2.5
 
 class Opponent:
@@ -17,6 +17,7 @@ class Opponent:
         # self.net = net
         self.walking_in = True
         self.hurt_x=None
+        self.hurt_done=False
 
     def handle_event(self, event):
 
@@ -87,8 +88,11 @@ class Opponent:
                 if self.opponent_assets.get_animation(self.opponent_state).is_finished():
                     self.opponent_state = 'idle'
             elif self.opponent_state in END_STATES:
-                if self.opponent_state == 'hurt' and self.hurt_x is not None and self.opponent_x < self.hurt_x + 8:
-                    self.opponent_x += 2
+                if self.opponent_state == 'hurt' and self.hurt_x is not None:
+                    if self.opponent_x < self.hurt_x + 8:
+                        self.opponent_x += 2
+                    else:
+                        self.hurt_done=True
                 if self.opponent_assets.get_animation(self.opponent_state).is_finished():
                     pass
 
@@ -127,3 +131,6 @@ class Opponent:
     
     def set_hurt(self, x_pos: int):
         self.hurt_x = x_pos
+    
+    def get_hurt_done(self) -> bool:
+        return self.hurt_done

@@ -75,6 +75,28 @@ SPRITES = {
         "frame_rate": 12,
         "loop": True,
     },
+    "hurt": {
+        "path": "./supa-fighta-client/assets/Hurt.png",
+        "rows": 1,
+        "cols": 8,
+        "width": 120,
+        "height": 120,
+        "hitbox": None,
+        "hurtbox": (80,120),
+        "frame_rate": 10,
+        "loop": False,
+    },
+    "win": {
+        "path": "./supa-fighta-client/assets/Win.png",
+        "rows": 1,
+        "cols": 9,
+        "width": 120,
+        "height": 120,
+        "hitbox": None,
+        "hurtbox": (80,120),
+        "frame_rate": 10,
+        "loop": False,
+    },
 }
 
 # SOUND EFFECTS

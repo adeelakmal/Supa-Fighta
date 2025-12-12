@@ -29,6 +29,7 @@ class GameplayState:
         self.background = Animator(self.background_sprites, 10)
         self._last_snapshot_time = time.time()
         self._current_time = time.time()
+        self.game_over = False
 
     def enter(self):        
         pygame.mixer.music.load(config.MUSIC["fight"])
@@ -39,6 +40,9 @@ class GameplayState:
         self.running = False
     def update(self):
         self.background.update()
+        server_message = self.player.net.get_last_response()
+        if server_message and server_message.get('type') == 'game_draw':
+            self.game_over = True
 
         if Collision.check_overlap(self.player, self.opponent):
             if self.player.player_state!="idle":
@@ -51,18 +55,8 @@ class GameplayState:
         else:
             self.player.speed = 2
             self.opponent.speed = 2
-
-        self.opponent.update()
-        self.player.update()     
-
-        # TODO: show victory screen and go back to lobby
-        Collision.check_collision(self.player, self.opponent)
         
-        self._current_time = time.time()
-        if self._current_time - self._last_snapshot_time >= 0.1:
-            snapshot = self._create_state_snapshot()
-            self.player.net.send_snapshot(snapshot)
-            self._cleanup()
+        # temp repositioning  
         last_opponent_update = self.player.net.get_last_opponent_update()
         if last_opponent_update and not self.opponent.walking_in:
             opp_state = last_opponent_update.get("current_state", "idle")
@@ -72,7 +66,29 @@ class GameplayState:
         last_player_correction = self.player.net.get_last_player_correction()
         if last_player_correction:
             # print(f"Applying correction to player position: {last_player_correction}")
-            self.player.reset_position(last_player_correction)
+            self.player.reset_position(last_player_correction)  
+
+        self.opponent.update()
+        self.player.update() 
+
+        # TODO: show victory screen and go back to lobby
+        Collision.check_collision(self.player, self.opponent)
+
+        if self.player.get_hurt_done():
+            self.opponent.set_state('win')
+        if self.opponent.get_hurt_done():
+            self.player.set_state('win')
+        
+        self._current_time = time.time()
+        if self._current_time - self._last_snapshot_time >= 0.1:
+            snapshot = self._create_state_snapshot()
+            self.player.net.send_snapshot(snapshot)
+            self._cleanup()
+    
+    def draw_game_over(self, surface):
+        font = pygame.font.SysFont(None, 74)
+        text = font.render("Game Over", True, (255, 0, 0))
+        surface.blit(text, (config.WINDOW_WIDTH // 2 - text.get_width() // 2, config.WINDOW_HEIGHT // 4))
         
     def draw(self, screen: pygame.Surface):
         self.background.draw(screen)
@@ -80,6 +96,8 @@ class GameplayState:
         self.player.draw(screen)
         if config.DEBUG:
             Collision.debug_draw(screen, self.player, self.opponent)
+        if self.game_over:    
+            self.draw_game_over(screen)
 
     def _create_state_snapshot(self):
         snapshot = {

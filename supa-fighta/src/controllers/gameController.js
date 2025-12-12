@@ -120,12 +120,15 @@ class Game {
     }
     reverseState(state) {
         // Reverse the state so it makes the same from the opponent's view
-        // if last 4 characters are "left", change them to "right"
-        if (state.slice(-4) === 'left') {
-            return state.slice(0, -4) + 'right';
-        }
-        if (state.slice(-5) === 'right'){ 
-           return state.slice(0, -5) + 'left';
+        if (!state) return state;
+        const words = state.split('_');
+        if (words.length > 1) {
+            if (words[1] === 'left') {
+                words[1] = 'right';
+            } else {
+                words[1] = 'left';
+            }
+            return words.join('_');
         }
         return state;
     }
@@ -144,7 +147,7 @@ class Game {
         history.forEach((input, index) => {
             this.processInput(playerId, input); 
         })
-        console.log(`Player ${playerId} position: client x=${x}, server x=${serverPos.x}`);
+        // console.log(`Player ${playerId} position: client x=${x}, server x=${serverPos.x}`);
         if (Math.abs(x - serverPos.x) > 10) {
             console.log(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}, correcting to x=${serverPos.x}`);
             const target = playerId === this.player1.id ? this.player1 : this.player2;
@@ -170,8 +173,8 @@ class Game {
         if (!winner) {
             console.log(`Match ${this.matchId} ended in a draw or time-out.`);
             await this.matchRepository.updateMatchStatus(null, this.matchId);
-            this.player1.ws.send(JSON.stringify({ type: 'game_end', winner: null }));
-            this.player2.ws.send(JSON.stringify({ type: 'game_end', winner: null }));
+            this.player1.ws.send(JSON.stringify({ type: 'game_draw', winner: null }));
+            this.player2.ws.send(JSON.stringify({ type: 'game_draw', winner: null }));
             return;
         }
         console.log(`Match ${this.matchId} ended with ${winner.id} as winner.`);

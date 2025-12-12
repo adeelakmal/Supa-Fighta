@@ -3,6 +3,7 @@ import config
 from loader import AssetLoader
 
 ACTIONABLE_STATES = ['dash', 'punch', 'parry']
+END_STATES = ['hurt', 'win']
 DASH_FACTOR = 2.5
 
 class Opponent:
@@ -15,11 +16,15 @@ class Opponent:
         self.velocity = 0        
         # self.net = net
         self.walking_in = True
+        self.hurt_x=None
+        self.hurt_done=False
         # Simple smooth-move state for reset_position
         self.target_x = None
         self.moving_to_target = False
 
     def handle_event(self, event):
+        if self.opponent_state in END_STATES:
+            return
 
         match event:
             case "idle":
@@ -71,6 +76,8 @@ class Opponent:
     def reset_position(self, x, player_speed):
         # Minimal implementation: set a clamped target and let update() step toward it
         sprite_width = 80
+        if abs(x - self.opponent_x) >= 0:
+            return
         clamped = max(sprite_width, min(config.WINDOW_WIDTH - sprite_width, x))
         if clamped == self.opponent_x:
             # already at target
@@ -116,6 +123,14 @@ class Opponent:
             if self.opponent_state in ACTIONABLE_STATES:
                 if self.opponent_assets.get_animation(self.opponent_state).is_finished():
                     self.opponent_state = 'idle'
+            elif self.opponent_state in END_STATES:
+                if self.opponent_state == 'hurt' and self.hurt_x is not None:
+                    if self.opponent_x < self.hurt_x + 8:
+                        self.opponent_x += 2
+                    else:
+                        self.hurt_done=True
+                if self.opponent_assets.get_animation(self.opponent_state).is_finished():
+                    pass
 
     def draw(self, surface):
         self.opponent_assets.get_animation(self.opponent_state).draw(surface, (self.opponent_x - 40, self.opponent_y)) # Pygames flip is weird can not set anchor point for flipping so i have to subtract half width of sprite from x position to render it in te correct position
@@ -146,3 +161,12 @@ class Opponent:
             asset_hitbox[3],
         )
         return hitbox
+    
+    def set_state(self, state: str):
+        self.opponent_state = state
+    
+    def set_hurt(self, x_pos: int):
+        self.hurt_x = x_pos
+    
+    def get_hurt_done(self) -> bool:
+        return self.hurt_done

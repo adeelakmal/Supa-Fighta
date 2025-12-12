@@ -5,8 +5,8 @@ from server.ws_client import WSClient
 from sound_loader import SoundLoader
 
 ACTIONABLE_STATES = ['dash', 'punch', 'parry']
-NO_SFX_STATES = ['walk', 'idle', 'wait', 'hurt']
-END_STATES = ['hurt']
+NO_SFX_STATES = ['walk', 'idle', 'wait', 'hurt', 'win']
+END_STATES = ['hurt', 'win']
 DASH_FACTOR = 2.5
 
 class Player:
@@ -21,6 +21,7 @@ class Player:
         self.player_state ='wait'
         self.velocity = 0
         self.hurt_x=None
+        self.hurt_done=False
         self.net = WSClient(config.WS_URL)
     def handle_keys(self):
         keys = pygame.key.get_pressed()
@@ -79,8 +80,11 @@ class Player:
             if self.player_assets.get_animation(self.player_state).is_finished():
                 self.player_state = 'idle'
         elif self.player_state in END_STATES:   
-            if self.player_state == 'hurt' and self.hurt_x is not None and self.player_x > self.hurt_x - 8:
+            if self.player_state == 'hurt' and self.hurt_x is not None:
+                if self.player_x > self.hurt_x - 8:
                     self.player_x -= 2
+                else:
+                    self.hurt_done=True
             if self.player_assets.get_animation(self.player_state).is_finished():
                 pass
         else:
@@ -121,3 +125,6 @@ class Player:
 
     def set_hurt(self, x_pos: int):
         self.hurt_x = x_pos
+
+    def get_hurt_done(self) -> bool:
+        return self.hurt_done

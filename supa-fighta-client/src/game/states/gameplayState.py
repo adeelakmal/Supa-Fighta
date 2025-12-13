@@ -46,18 +46,30 @@ class GameplayState:
 
         if Collision.check_overlap(self.player, self.opponent):
             if self.player.player_state!="idle":
-                self.player.speed = 0.7
+                self.player.speed = 1
                 self.opponent.opponent_x=self.player.player_x + 80
             else:
-                self.opponent.speed = 0.7
+                self.opponent.speed = 1
                 self.player.player_x=self.opponent.opponent_x - 80
 
         else:
             self.player.speed = 2
             self.opponent.speed = 2
+        
+        # temp repositioning  
+        last_opponent_update = self.player.net.get_last_opponent_update()
+        if last_opponent_update and not self.opponent.walking_in:
+            opp_state = last_opponent_update.get("current_state", "idle")
+            opp_position = last_opponent_update.get("position").get("x", self.opponent.opponent_x)
+            self.opponent.handle_event(opp_state)
+            self.opponent.reset_position(opp_position, self.player.speed) #using player speed to judge if the opponent is being pushed
+        last_player_correction = self.player.net.get_last_player_correction()
+        if last_player_correction:
+            # print(f"Applying correction to player position: {last_player_correction}")
+            self.player.reset_position(last_player_correction)  
 
         self.opponent.update()
-        self.player.update()     
+        self.player.update() 
 
         # TODO: show victory screen and go back to lobby
         Collision.check_collision(self.player, self.opponent)
@@ -72,10 +84,6 @@ class GameplayState:
             snapshot = self._create_state_snapshot()
             self.player.net.send_snapshot(snapshot)
             self._cleanup()
-        last_opponent_update = self.player.net.get_last_opponent_update()
-        if last_opponent_update and not self.opponent.walking_in:
-            opp_state = last_opponent_update.get("current_state", "idle")
-            self.opponent.handle_event(opp_state)
     
     def draw_game_over(self, surface):
         font = pygame.font.SysFont(None, 74)

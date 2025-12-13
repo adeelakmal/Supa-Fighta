@@ -70,7 +70,7 @@ class Game {
                 }
                 break;
             case 'walk_right':
-                if ( pos.x + this.moveStep < reversedOtherPos.x - 80 ) {
+                if ( pos.x + this.moveStep <= reversedOtherPos.x - 80 ) {
                     pos.x += this.moveStep;
                 }
                 else if ( pos.x + this.moveStep > 640 - (80*2) ) {
@@ -80,12 +80,10 @@ class Game {
                 else {
                     // else players are definitely overlapping so we add pushing logic here
                     console.log("players pushing");
-                    this.moveStep = 0.7;
-                    pos.x = +(pos.x + this.moveStep).toFixed(1);
+                    pos.x = pos.x + 1;
                     // console.log(`Player ${playerId} position after push: ${pos.x}`);
-                    reversedOtherPos.x = Math.min(640 - 80, +(pos.x + 80).toFixed(1));
+                    reversedOtherPos.x = Math.min(640 - 80, +(pos.x + 80));
                     otherPos.x = this.reversePosition(reversedOtherPos).x;
-                    this.moveStep = 2;
                   
                 }
                 break;
@@ -143,20 +141,23 @@ class Game {
 
     validateState(playerId, snapshot) {
         const player_state  = snapshot.player;
-        const { history, state, x, y } = player_state;
+        const { history, state} = player_state;
+        let x = player_state.x;
         const serverPos = this.positions[playerId];
         history.forEach((input, index) => {
             this.processInput(playerId, input); 
         })
+        // console.log(`Player ${playerId} position: client x=${x}, server x=${serverPos.x}`);
         if (Math.abs(x - serverPos.x) > 10) {
-            // console.warn(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}`);
-        }
-        console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
+            console.log(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}, correcting to x=${serverPos.x}`);
+            const target = playerId === this.player1.id ? this.player1 : this.player2;
+            target.ws.send(JSON.stringify({type: 'correction', position: serverPos.x}));
+        } 
+        // console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
 
         // send response to opponent
-        let pos = this.reversePosition(playerId, serverPos);
+        let pos = this.reversePosition(serverPos);
         let op_state = this.reverseState(history[history.length - 1]);
-        
         let message = {
             type: 'opponent_update',
             position: pos,
@@ -176,7 +177,7 @@ class Game {
             this.player2.ws.send(JSON.stringify({ type: 'game_draw', winner: null }));
             return;
         }
-        console.log(`Match ${this.matchId} ended with ${winnerd.id} as winner.`);
+        console.log(`Match ${this.matchId} ended with ${winner.id} as winner.`);
         await this.matchRepository.updateMatchStatus(winner.id,this.matchId)
 
         // Update players' stats

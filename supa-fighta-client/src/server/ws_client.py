@@ -17,6 +17,7 @@ class WSClient:
         self._running = True
         self._response = None
         self.last_opponent_update = None
+        self.last_player_correction = None
         self._response_event = threading.Event()
         threading.Thread(target=self._start_async_recv_loop, daemon=True).start()
         if config.PLAYER_ID:
@@ -41,6 +42,9 @@ class WSClient:
     
     def get_last_opponent_update(self):
         return self.last_opponent_update
+    
+    def get_last_player_correction(self):
+        return self.last_player_correction
 
     def close(self):
         self._running = False
@@ -68,6 +72,8 @@ class WSClient:
                             config.PLAYER_ID = player_id
                     if data.get('type') == 'opponent_update':
                         self.last_opponent_update = data
+                    if data.get('type') == 'correction':
+                        self.last_player_correction = float(data.get('position'))
 
                     #TODO: Add logic in the game state to correct any discrepancies
                     # If message recieved is a snapshot ack, dont need to do anything

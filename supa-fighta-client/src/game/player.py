@@ -120,6 +120,9 @@ class Player:
         )
         return hitbox
     
+    def reset_position(self, x):
+        self.player_x = x
+    
     def set_state(self, state: str):
         self.player_state = state
 

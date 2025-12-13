@@ -74,9 +74,9 @@ class GameplayState:
         # TODO: show victory screen and go back to lobby
         Collision.check_collision(self.player, self.opponent)
 
-        if self.player.get_hurt_done():
+        if self.player.get_hurt_done() and self.player.player_assets.get_animation('hurt').is_finished():
             self.opponent.set_state('win')
-        if self.opponent.get_hurt_done():
+        if self.opponent.get_hurt_done() and self.opponent.opponent_assets.get_animation('hurt').is_finished():
             self.player.set_state('win')
         
         self._current_time = time.time()

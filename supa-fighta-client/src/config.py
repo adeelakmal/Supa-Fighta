@@ -99,6 +99,12 @@ SPRITES = {
     },
 }
 
+#Recovery durations (in milliseconds)
+RECOVERY_DURATIONS = {
+    'punch': 500,
+    'parry': 450
+}
+
 # SOUND EFFECTS
 SOUND = {
     "punch" : {

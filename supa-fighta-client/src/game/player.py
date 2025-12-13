@@ -7,10 +7,6 @@ from sound_loader import SoundLoader
 ACTIONABLE_STATES = ['dash', 'punch', 'parry']
 NO_SFX_STATES = ['walk', 'idle', 'wait', 'hurt', 'win']
 END_STATES = ['hurt', 'win']
-RECOVERY_DURATIONS = {
-    'punch': 500,
-    'parry': 450
-}
 DASH_FACTOR = 2.5
 
 class Player:
@@ -43,12 +39,12 @@ class Player:
                 self.player_state = 'punch'
                 # TODO: Use Player State to Fetch Assets
                 self.player_assets.get_animation('punch').reset()
-                self.recovery_until = now + RECOVERY_DURATIONS.get('punch', 0)
+                self.recovery_until = now + config.RECOVERY_DURATIONS.get('punch', 0)
         if keys[pygame.K_a]:
             if self.player_state != "parry":
                 self.player_state = "parry"
                 self.player_assets.get_animation('parry').reset()
-                self.recovery_until = now + RECOVERY_DURATIONS.get('parry', 0)
+                self.recovery_until = now + config.RECOVERY_DURATIONS.get('parry', 0)
         if keys[pygame.K_LEFT]:
             delta_left_tap = now - self.last_tap_time[pygame.K_LEFT]
             if (30 < delta_left_tap < 200) and (self.player_state != 'dash'):

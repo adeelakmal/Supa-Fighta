@@ -64,7 +64,7 @@ class GameplayState:
             self.opponent.handle_event(opp_state)
             self.opponent.reset_position(opp_position, self.player.speed) #using player speed to judge if the opponent is being pushed
         last_player_correction = self.player.net.get_last_player_correction()
-        if last_player_correction:
+        if last_player_correction and self.player.player_state !='hurt': # correct only if not hurt
             # print(f"Applying correction to player position: {last_player_correction}")
             self.player.reset_position(last_player_correction)  
 
@@ -74,9 +74,9 @@ class GameplayState:
         # TODO: show victory screen and go back to lobby
         Collision.check_collision(self.player, self.opponent)
 
-        if self.player.get_hurt_done():
+        if self.player.get_hurt_done() and self.player.player_assets.get_animation('hurt').is_finished():
             self.opponent.set_state('win')
-        if self.opponent.get_hurt_done():
+        if self.opponent.get_hurt_done() and self.opponent.opponent_assets.get_animation('hurt').is_finished():
             self.player.set_state('win')
         
         self._current_time = time.time()

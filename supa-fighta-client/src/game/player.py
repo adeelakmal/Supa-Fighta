@@ -63,18 +63,13 @@ class Player:
                 self.player_state = 'walk'
             self.velocity = self.speed * (DASH_FACTOR if self.player_state == 'dash' else 1)
             self.last_tap_time[pygame.K_RIGHT] = now
-        if self.player_state in ['walk', 'dash']:
-            player_state_mod = self.player_state + ('_right' if self.velocity > 0 else '_left')
-            self._inputs.append(player_state_mod)
-
-        else:
-            self._inputs.append(self.player_state)
 
     def update(self):
         self.player_assets.get_animation(self.player_state).update()
         if self.player_state not in NO_SFX_STATES:
             self.sound_loader.get_sound(self.player_state).play()
         new_x = self.player_x + self.velocity
+        
         sprite_width = 80
         if new_x < 0:
             new_x = 0
@@ -95,6 +90,13 @@ class Player:
                 pass
         else:
             self.handle_keys()
+        
+        if self.player_state in ['walk', 'dash']:
+            player_state_mod = self.player_state + ('_right' if self.velocity > 0 else '_left')
+            self._inputs.append(player_state_mod)
+
+        else:
+            self._inputs.append(self.player_state)
 
     def draw(self, surface):
         self.player_assets.get_animation(self.player_state).draw(surface, (self.player_x, self.player_y))
@@ -127,6 +129,7 @@ class Player:
         return hitbox
     
     def reset_position(self, x):
+        print(f"Resetting player to server position x={x}")
         self.player_x = x
     
     def set_state(self, state: str):

@@ -61,8 +61,7 @@ class GameplayState:
         if last_opponent_update and not self.opponent.walking_in:
             opp_state = last_opponent_update.get("current_state", "idle")
             opp_position = last_opponent_update.get("position").get("x", self.opponent.opponent_x)
-            self.opponent.handle_event(opp_state)
-            self.opponent.reset_position(opp_position, self.player.speed) #using player speed to judge if the opponent is being pushed
+            self.opponent.reset_position(opp_position, opp_state) #using player speed to judge if the opponent is being pushed
         last_player_correction = self.player.net.get_last_player_correction()
         if last_player_correction and self.player.player_state !='hurt': # correct only if not hurt
             # print(f"Applying correction to player position: {last_player_correction}")

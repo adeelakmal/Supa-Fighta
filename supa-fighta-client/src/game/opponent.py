@@ -2,7 +2,7 @@ import pygame
 import config
 from loader import AssetLoader
 
-ACTIONABLE_STATES = ['dash', 'punch', 'parry']
+ACTIONABLE_STATES = ['dash', 'punch', 'parry', 'parry-hit', 'parried']
 END_STATES = ['hurt', 'win']
 DASH_FACTOR = 2.5
 
@@ -21,8 +21,14 @@ class Opponent:
         # Simple smooth-move state for reset_position
         self.target_x = None
         self.moving_to_target = False
+        self.recovery_until = 0
 
     def handle_event(self, event):
+        now = pygame.time.get_ticks()
+
+        if now < self.recovery_until:
+            return
+
         if self.opponent_state in END_STATES:
             return
 

@@ -19,17 +19,31 @@ class Collision:
         opponent_hitbox = opponent.get_hitbox()
        
         if player_hitbox and player_hitbox.colliderect(opponent_hurtbox):
-            if DEBUG:
+            if DEBUG and player.player_state!="parry":
                 print(f"Player Wins! Player Hitbox: {player_hitbox}, Opponent Hurtbox: {opponent_hurtbox}")
-            opponent.set_state('hurt')
-            opponent.set_hurt(opponent.opponent_x)
-            return True
+            if opponent.opponent_state!="parry":
+                opponent.set_state('hurt')
+                opponent.set_hurt(opponent.opponent_x)
+                return True
+            else:
+                if DEBUG:
+                    print("Opponent parried the attack!")
+                opponent.set_state('parry-hit')
+                player.set_state('parried')
+                player.recovery_until+=300
         elif opponent_hitbox and opponent_hitbox.colliderect(player_hurtbox):
-            if DEBUG:
+            if DEBUG and opponent.opponent_state!="parry":
                 print(f"Opponent Wins! Opponent Hitbox: {opponent_hitbox}, Player Hurtbox: {player_hurtbox}")
-            player.set_state('hurt')
-            player.set_hurt(player.player_x)
-            return True
+            if player.player_state!="parry":
+                player.set_state('hurt')
+                player.set_hurt(player.player_x)
+                return True
+            else:
+                if DEBUG:
+                    print("Player parried the attack!")
+                player.set_state('parry-hit')
+                opponent.set_state('parried')
+                opponent.recovery_until+=300
         return False
     def debug_draw(surface: pygame.Surface, player: Player, opponent: Opponent):
         player_hurtbox = player.get_hurtbox()

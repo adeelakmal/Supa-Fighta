@@ -61,7 +61,7 @@ SPRITES = {
         "height": 120,
         "hitbox": None,
         "hurtbox": (80,120),
-        "frame_rate": 1,
+        "frame_rate": 15,
         "loop": False,
     },
     "wait": {

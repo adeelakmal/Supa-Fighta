@@ -19,9 +19,9 @@ class Collision:
         opponent_hitbox = opponent.get_hitbox()
        
         if player_hitbox and player_hitbox.colliderect(opponent_hurtbox):
-            if DEBUG and player.player_state!="parry":
+            if DEBUG and opponent.opponent_state!="parry":
                 print(f"Player Wins! Player Hitbox: {player_hitbox}, Opponent Hurtbox: {opponent_hurtbox}")
-            if opponent.opponent_state!="parry":
+            if opponent.opponent_state!="parry" and opponent.opponent_state!="parry-hit":
                 opponent.set_state('hurt')
                 opponent.set_hurt(opponent.opponent_x)
                 return True
@@ -32,9 +32,9 @@ class Collision:
                 player.set_state('parried')
                 player.recovery_until+=300
         elif opponent_hitbox and opponent_hitbox.colliderect(player_hurtbox):
-            if DEBUG and opponent.opponent_state!="parry":
+            if DEBUG and player.player_state!="parry":
                 print(f"Opponent Wins! Opponent Hitbox: {opponent_hitbox}, Player Hurtbox: {player_hurtbox}")
-            if player.player_state!="parry":
+            if player.player_state!="parry" and player.player_state!="parry-hit":
                 player.set_state('hurt')
                 player.set_hurt(player.player_x)
                 return True

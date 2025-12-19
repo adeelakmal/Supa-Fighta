@@ -4,8 +4,8 @@ import config
 from server.ws_client import WSClient
 from sound_loader import SoundLoader
 
-ACTIONABLE_STATES = ['dash', 'punch', 'parry']
-NO_SFX_STATES = ['walk', 'idle', 'wait', 'hurt', 'win']
+ACTIONABLE_STATES = ['dash', 'punch', 'parry', 'parry-hit', 'parried']
+NO_SFX_STATES = ['walk', 'idle', 'wait', 'hurt', 'win', 'parry-hit', 'parried']
 END_STATES = ['hurt', 'win']
 DASH_FACTOR = 2.5
 

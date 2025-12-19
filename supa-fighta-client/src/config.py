@@ -97,6 +97,28 @@ SPRITES = {
         "frame_rate": 10,
         "loop": False,
     },
+    "parry-hit": {
+        "path": "./supa-fighta-client/assets/Parry-Hit.png",
+        "rows": 1,
+        "cols": 4,
+        "width": 120,
+        "height": 120,
+        "hitbox": None,
+        "hurtbox": (80,120),
+        "frame_rate": 8,
+        "loop": False,
+    },
+        "parried": {
+        "path": "./supa-fighta-client/assets/Parried.png",
+        "rows": 1,
+        "cols": 4,
+        "width": 120,
+        "height": 120,
+        "hitbox": None,
+        "hurtbox": (80,120),
+        "frame_rate": 10,
+        "loop": False,
+    },
 }
 
 #Recovery durations (in milliseconds)

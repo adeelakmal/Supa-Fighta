@@ -76,7 +76,7 @@ class Opponent:
     def reset_position(self, x, player_speed):
         # Minimal implementation: set a clamped target and let update() step toward it
         sprite_width = 80
-        if abs(x - self.opponent_x) >= 0:
+        if abs(x - self.opponent_x) <= 1:
             return
         clamped = max(sprite_width, min(config.WINDOW_WIDTH - sprite_width, x))
         if clamped == self.opponent_x:
@@ -88,7 +88,7 @@ class Opponent:
             return
         self.target_x = clamped
         self.moving_to_target = True
-        if player_speed > 2:
+        if player_speed >= 2:
             self.opponent_state = 'walk'
         self.velocity = self.speed if self.target_x > self.opponent_x else -self.speed
 

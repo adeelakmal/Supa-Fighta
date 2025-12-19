@@ -44,7 +44,9 @@ class WSClient:
         return self.last_opponent_update
     
     def get_last_player_correction(self):
-        return self.last_player_correction
+        correction = self.last_player_correction
+        self.last_player_correction = None
+        return correction
 
     def close(self):
         self._running = False

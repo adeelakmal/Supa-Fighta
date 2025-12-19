@@ -147,6 +147,11 @@ class Game {
         history.forEach((input, index) => {
             this.processInput(playerId, input); 
         })
+        if (history[history.length - 1] === "dash_right") {
+            console.log(`Player ${playerId} history: ${history}`);
+            console.log(`serverPos after dash_right processing: x=${serverPos.x}`);
+            console.log(`vs client x=${x}`);
+        }
         // console.log(`Player ${playerId} position: client x=${x}, server x=${serverPos.x}`);
         if (Math.abs(x - serverPos.x) > 10) {
             console.log(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}, correcting to x=${serverPos.x}`);

@@ -16,7 +16,7 @@ class GameState:
         print(f"Changed state to: {new_state}")
         if new_state == "gameplay":
             lobby_state = self.states["lobby"]
-            self.states["gameplay"] = GameplayState(lobby_state.get_player())
+            self.states["gameplay"] = GameplayState(lobby_state.get_player(), self)
         
         if new_state in self.states:
             self.current_state.exit()

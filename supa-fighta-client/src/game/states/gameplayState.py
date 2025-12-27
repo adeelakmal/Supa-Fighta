@@ -31,6 +31,7 @@ class GameplayState:
         self._last_snapshot_time = time.time()
         self._current_time = time.time()
         self.game_over = False
+        self.final_message = None
         self._game_end_time = None
 
     def enter(self):        
@@ -46,12 +47,15 @@ class GameplayState:
         if server_message and server_message.get('type') == 'game_end':
             self.game_over = True
             self._game_end_time = time.time()
-            if server_message.get('winner') == config.PLAYER_ID:
-                print("You win!")
-            elif server_message.get('winner') is None:
-                print("The game ended in a draw.")
+            if server_message.get('winner') is not None:
+                if server_message.get('winner') == config.PLAYER_ID:
+                    self.final_message = "You Win!"
+                    self.winner = self.player
+                else:
+                    self.final_message = "You lose!"
+                    self.winner = self.opponent
             else:
-                print("You lose!")
+                self.final_message = "Match ended in a draw."
 
         if Collision.check_overlap(self.player, self.opponent):
             if self.player.player_state!="idle":
@@ -99,7 +103,7 @@ class GameplayState:
     
     def draw_game_over(self, surface):
         font = pygame.font.SysFont(None, 74)
-        text = font.render("Game Over", True, (255, 0, 0))
+        text = font.render(self.final_message, True, (255, 0, 0))
         surface.blit(text, (config.WINDOW_WIDTH // 2 - text.get_width() // 2, config.WINDOW_HEIGHT // 4))
         
     def draw(self, screen: pygame.Surface):

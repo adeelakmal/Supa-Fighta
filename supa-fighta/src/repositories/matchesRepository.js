@@ -10,7 +10,8 @@ class MatchesRepository{
         `, [player1.id, player2.id]);
         return match.rows[0].match_id
     }
-    async updateMatchStatus(id=NULL, matchId){
+    async updateMatchStatus(winner=NULL, matchId){
+        const id = winner ? winner.id : null
         await this.pool.query(`
             UPDATE matches
             SET status = 1, winner_id = $1

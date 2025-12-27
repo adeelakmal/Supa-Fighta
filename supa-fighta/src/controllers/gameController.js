@@ -24,7 +24,7 @@ class Game {
             [player1.id]: [],
             [player2.id]: []
         };
-        this.timer = 60 * 60; // 60 seconds at 60Hz
+        this.timer = 10 * 60; // 60 seconds at 60Hz
         this.winner = null;
         this.interval = null;
         this.moveStep = 2;
@@ -172,25 +172,17 @@ class Game {
     }
 
     async end(winner) {
+
         clearInterval(this.interval);
         this.status = 1;
-
-        if (!winner) {
-            console.log(`Match ${this.matchId} ended in a draw or time-out.`);
-            await this.matchRepository.updateMatchStatus(null, this.matchId);
-            this.player1.ws.send(JSON.stringify({ type: 'game_end', winner: null }));
-            this.player2.ws.send(JSON.stringify({ type: 'game_end', winner: null }));
-            return;
-        }
-        console.log(`Match ${this.matchId} ended with ${winner.id} as winner.`);
-        await this.matchRepository.updateMatchStatus(winner.id,this.matchId)
+        await this.matchRepository.updateMatchStatus(winner,this.matchId)
 
         // Update players' stats
-        winner.total_wins++;
-        winner.current_streak++;
-        winner.max_streak = Math.max(winner.max_streak, winner.current_streak);
-        losser.total_losses++;
-        losser.current_streak = 0;
+        // winner.total_wins++;
+        // winner.current_streak++;
+        // winner.max_streak = Math.max(winner.max_streak, winner.current_streak);
+        // losser.total_losses++;
+        // losser.current_streak = 0;
 
         /**
          * TODO: Replace these only when actual game logic is written
@@ -212,6 +204,7 @@ class Game {
         // Notify players that the game has ended
         this.player1.ws.send(JSON.stringify({ type: 'game_end', winner: winner ? winner.id : null }));
         this.player2.ws.send(JSON.stringify({ type: 'game_end', winner: winner ? winner.id : null }));
+        return;
     }
 }
 

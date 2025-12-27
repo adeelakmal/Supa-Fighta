@@ -6,6 +6,7 @@ const DASH_FACTOR = 2.5
 class Game {
     constructor(matchId, player1, player2) {
         this.matchRepository = new MatchesRepository(pool)
+
         this.matchId = matchId;
         this.player1 = player1;
         this.player2 = player2;
@@ -26,6 +27,7 @@ class Game {
         };
         this.timer = 10 * 60; // 60 seconds at 60Hz
         this.winner = null;
+        this.losser = null;
         this.interval = null;
         this.moveStep = 2;
 
@@ -101,6 +103,7 @@ class Game {
                 if(pos.x+80+30 > reversedOtherPos.x) {
                     console.log(`Player ${playerId} punched Player ${otherId}`);
                     this.winner = this.player1.id === playerId ? this.player1 : this.player2;
+                    this.losser = this.player1.id === playerId ? this.player2 : this.player1;
                 }
                 break;
             case 'parry':
@@ -177,29 +180,28 @@ class Game {
         this.status = 1;
         await this.matchRepository.updateMatchStatus(winner,this.matchId)
 
+
         // Update players' stats
-        // winner.total_wins++;
-        // winner.current_streak++;
-        // winner.max_streak = Math.max(winner.max_streak, winner.current_streak);
-        // losser.total_losses++;
-        // losser.current_streak = 0;
+        if (winner) {
+            winner.total_wins++;
+            winner.current_streak++;
+            winner.max_streak = Math.max(winner.max_streak, winner.current_streak);
+            winner.status = 0;
+            losser.total_losses++;
+            losser.current_streak = 0;
+            losser.status = 0;
+        } else {
+            this.player1.total_losses++;
+            this.player1.current_streak = 0;
+            this.player1.status = 0;
+            this.player2.total_losses++;
+            this.player2.current_streak = 0;
+            this.player2.status = 0;
+        }
 
         /**
-         * TODO: Replace these only when actual game logic is written
-         * Update all the player stats in the db when they leave the server this helps reduce total db calls made
+         * TODO: Update all the player stats in the db when they leave the server this helps reduce total db calls made
          */
-        
-        /*await pool.query(`
-            UPDATE players
-            SET total_wins = total_wins + 1, current_streak = current_streak + 1, max_streak = GREATEST(max_streak, current_streak)
-            WHERE player_id = $1
-        `, [winner.id]);
-
-        await pool.query(`
-            UPDATE players
-            SET total_losses = total_losses + 1, current_streak = 0
-            WHERE player_id = $1
-        `, [winner.id === this.player1.id ? this.player2.id : this.player1.id]);*/
 
         // Notify players that the game has ended
         this.player1.ws.send(JSON.stringify({ type: 'game_end', winner: winner ? winner.id : null }));

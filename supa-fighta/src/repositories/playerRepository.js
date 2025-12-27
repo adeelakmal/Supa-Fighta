@@ -11,20 +11,17 @@ class PlayerRepository {
             VALUES ($1, $2, 0)
         `, [player.id, player.username]);
     }
-    async updatePlayerWins(id){
-        await this.pool.query(`
-            UPDATE players
-            SET total_wins = total_wins + 1, current_streak = current_streak + 1, max_streak = GREATEST(max_streak, current_streak)
-            WHERE player_id = $1
-        `, [id]);
-    }
-    async updatePlayerLosses(id){
-        await this.pool.query(`
-            UPDATE players
-            SET total_losses = total_losses + 1, current_streak = 0
-            WHERE player_id = $1
-        `, [id]);
 
+    async updatePlayerStats(player){
+        await this.pool.query(`
+            UPDATE players
+            SET status = $1,
+                total_wins = $2,
+                current_streak = $3,
+                max_streak = $4,
+                total_losses = $5
+            WHERE player_id = $6
+        `, [0, player.total_wins || 0, player.current_streak || 0, player.max_streak || 0, player.total_losses || 0, player.id]);
     }
 }
 

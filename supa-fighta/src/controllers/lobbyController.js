@@ -41,11 +41,11 @@ const HandleMessage = async (ws, msg) => {
     }
 };
 
-const HandleClose = (ws) => {
+const HandleClose = async (ws) => {
+    const player = LOBBY.players.find(p => p.id === ws.id);
+    await playerRepository.updatePlayerStats(player);
     // Remove the player from the lobby
-    // const player = LOBBY.players.find(p => p.id === ws.id);
-    // playerRepository.updatePlayerStats(player);
-    LOBBY.players = LOBBY.players.filter(p => p.id !== ws.id);    
+    LOBBY.players = LOBBY.players.filter(p => p.id !== ws.id);   
     broadcastToLobby(LOBBY, { type: 'player_left', playerId: ws.id });
 };
 

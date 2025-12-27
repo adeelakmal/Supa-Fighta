@@ -1,13 +1,11 @@
 const pool = require('../config/db');
 const MatchesRepository = require('../repositories/matchesRepository');
-const PlayerRepository = require('../repositories/playerRepository')
 const PlayerState = require('../models/playerState');
 const DASH_FACTOR = 2.5
 
 class Game {
     constructor(matchId, player1, player2) {
         this.matchRepository = new MatchesRepository(pool)
-        this.playerRepository = new PlayerRepository(pool);
 
         this.matchId = matchId;
         this.player1 = player1;
@@ -200,9 +198,6 @@ class Game {
             this.player2.current_streak = 0;
             this.player2.status = 0;
         }
-
-        await this.playerRepository.updatePlayerStats(this.player1);
-        await this.playerRepository.updatePlayerStats(this.player2);
 
         /**
          * TODO: Update all the player stats in the db when they leave the server this helps reduce total db calls made

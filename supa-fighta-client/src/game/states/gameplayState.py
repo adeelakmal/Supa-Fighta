@@ -10,9 +10,10 @@ import pygame
 import time
 
 class GameplayState:
-    def __init__(self, player: Player):
+    def __init__(self, player: Player, state_manager):
         self.running = True
         self.player = player
+        self.state_manager = state_manager
         # self.net = WSClient(config.WS_URL)
         if player is None: # for testing purposes
             self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
@@ -30,6 +31,8 @@ class GameplayState:
         self._last_snapshot_time = time.time()
         self._current_time = time.time()
         self.game_over = False
+        self.final_message = None
+        self._game_end_time = None
 
     def enter(self):        
         pygame.mixer.music.load(config.MUSIC["fight"])
@@ -41,8 +44,18 @@ class GameplayState:
     def update(self):
         self.background.update()
         server_message = self.player.net.get_last_response()
-        if server_message and server_message.get('type') == 'game_draw':
+        if server_message and server_message.get('type') == 'game_end':
             self.game_over = True
+            self._game_end_time = time.time()
+            if server_message.get('winner') is not None:
+                if server_message.get('winner') == config.PLAYER_ID:
+                    self.final_message = "You Win!"
+                    self.winner = self.player
+                else:
+                    self.final_message = "You lose!"
+                    self.winner = self.opponent
+            else:
+                self.final_message = "Match ended in a draw."
 
         if Collision.check_overlap(self.player, self.opponent):
             if self.player.player_state!="idle":
@@ -83,10 +96,14 @@ class GameplayState:
             snapshot = self._create_state_snapshot()
             self.player.net.send_snapshot(snapshot)
             self._cleanup()
+        
+        if self.game_over and self._game_end_time is not None:
+            if time.time() - self._game_end_time >= 5:
+                self.state_manager.change_state("lobby")
     
     def draw_game_over(self, surface):
         font = pygame.font.SysFont(None, 74)
-        text = font.render("Game Over", True, (255, 0, 0))
+        text = font.render(self.final_message, True, (255, 0, 0))
         surface.blit(text, (config.WINDOW_WIDTH // 2 - text.get_width() // 2, config.WINDOW_HEIGHT // 4))
         
     def draw(self, screen: pygame.Surface):

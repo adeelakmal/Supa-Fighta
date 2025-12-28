@@ -25,6 +25,10 @@ const HandleMessage = async (ws, msg) => {
           ws.send(JSON.stringify({ type: 'validation_result', valid: false }));
           return
         }
+        // if (LOBBY.players.some(p => p.id === playerId)) {
+        //   ws.send(JSON.stringify({ type: 'player_in_lobby', message: 'Player already in lobby' }));
+        //   return
+        // }
         ws.id = playerId
         const player = new Player(ws, player_exists.rows[0].player_name);
         player.id = playerId;
@@ -53,9 +57,10 @@ const MatchmakePlayers = async () => {
     try {
         
         // Sort and filter players based on win_streak and status
+        const seen = new Set(); // To avoid duplicate matches
         let players = LOBBY.players
-        .sort((p1, p2) => p2.win_streak - p1.win_streak)
-        .filter(p => p.status === 0);
+            .sort((p1, p2) => p2.win_streak - p1.win_streak)
+            .filter(p => p.status === 0 && !seen.has(p.id) && seen.add(p.id));
 
         if (players.length < 2) return;
 

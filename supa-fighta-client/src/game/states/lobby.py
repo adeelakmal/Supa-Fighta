@@ -57,3 +57,5 @@ class LobbyState:
                 self.lobby_state = "Match found! Starting game..."
                 pygame.time.delay(1000)
                 self.state_manager.change_state("gameplay")
+        elif server_message.get('type') == 'player_in_lobby': # another player joined the lobby with same id
+            self.state_manager.change_state("main_menu")

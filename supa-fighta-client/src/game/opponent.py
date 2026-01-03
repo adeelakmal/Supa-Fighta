@@ -81,6 +81,7 @@ class Opponent:
 
     def reset_position(self, x, state):
         # Minimal implementation: set a clamped target and let update() step toward it
+        self.handle_event(state)
         sprite_width = 80
         if abs(x - self.opponent_x) <= 1:
             return
@@ -92,7 +93,6 @@ class Opponent:
             self.velocity = 0
             self.opponent_state = 'idle'
             return
-        self.handle_event(state)
         self.target_x = clamped
         self.moving_to_target = True
 
@@ -104,12 +104,13 @@ class Opponent:
             sprite_width = 80
             if self.moving_to_target and self.target_x is not None:
                 dist = self.target_x - self.opponent_x
-                if abs(dist) <= abs(self.speed):
+                # If within one step, snap to the target and stop to avoid overshoot/jitter
+                if abs(dist) <= self.speed:
                     self.opponent_x = self.target_x
                     self.moving_to_target = False
                     self.target_x = None
+                    # clear velocity so we don't immediately move again
                     self.velocity = 0
-                    self.opponent_state = 'idle'
                 else:
                     step = self.speed if dist > 0 else -self.speed
                     new_x = self.opponent_x + step

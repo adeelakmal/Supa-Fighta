@@ -48,13 +48,10 @@ class MainMenuState:
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             self.using_mouse = False
-
             if event.key == pygame.K_DOWN:
                 self._move_selection(1)
-
             elif event.key == pygame.K_UP:
                 self._move_selection(-1)
-
             elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                 self._activate(self.buttons[self.selected_index].text)
 
@@ -70,7 +67,6 @@ class MainMenuState:
     def _set_selected_index(self, index):
         if index == self.selected_index:
             return
-
         self.buttons[self.selected_index].set_selected(False)
         self.selected_index = index
         self.buttons[self.selected_index].set_selected(True)

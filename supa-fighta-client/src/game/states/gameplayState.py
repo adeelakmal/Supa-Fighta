@@ -43,6 +43,10 @@ class GameplayState:
         self.running = False
     def update(self):
         self.background.update()
+        if not self.opponent.walking_in:
+            self.player.opponent_walking_in = False
+        elif self.opponent.walking_in and self.player.player_state == 'wait':
+            self.player.set_state('idle')
         server_message = self.player.net.get_last_response()
         if server_message and server_message.get('type') == 'game_end':
             self.game_over = True

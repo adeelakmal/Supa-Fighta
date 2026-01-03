@@ -24,11 +24,12 @@ class Player:
         self.hurt_done=False
         self.net = WSClient(config.WS_URL)
         self.recovery_until = 0
+        self.opponent_walking_in = True
     def handle_keys(self):
         keys = pygame.key.get_pressed()
         now = pygame.time.get_ticks()
 
-        if now < self.recovery_until:
+        if now < self.recovery_until or self.opponent_walking_in:
             return
 
         self.player_state = 'idle' 

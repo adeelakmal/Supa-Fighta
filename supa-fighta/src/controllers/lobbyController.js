@@ -25,10 +25,10 @@ const HandleMessage = async (ws, msg) => {
           ws.send(JSON.stringify({ type: 'validation_result', valid: false }));
           return
         }
-        // if (LOBBY.players.some(p => p.id === playerId)) {
-        //   ws.send(JSON.stringify({ type: 'player_in_lobby', message: 'Player already in lobby' }));
-        //   return
-        // }
+        if (LOBBY.players.some(p => p.id === playerId)) {
+          ws.send(JSON.stringify({ type: 'player_in_lobby', message: 'Player already in lobby' }));
+          return
+        }
         ws.id = playerId
         const player = new Player(ws, player_exists.rows[0].player_name);
         player.id = playerId;

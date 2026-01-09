@@ -24,9 +24,15 @@ const setupWebSocketServer = (port) => {
       if ( data.type === "snapshot") {
         gameManager.routeInput(LOBBY, data.playerId, data.snapshot);
         // ws.send(JSON.stringify({ type: 'ack', message: 'valid state' }));
+      }else{
+        try{
+          HandleMessage(ws, message);
+        } catch(err){
+          console.error('Error handling message:', err);
+          ws.send(JSON.stringify({ type: 'error', message: `Error processing message: ${err}` }));
+        }
       }
 
-      HandleMessage(ws, message);
     });
 
     ws.on('close', () => HandleClose(ws));

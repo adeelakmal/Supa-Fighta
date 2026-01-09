@@ -20,6 +20,7 @@ const HandleMessage = async (ws, msg) => {
     const { type, playerId, username } = data;
 
     if (type === "validate_player") {
+        console.log(data)
         const player_exists = await playerRepository.getPlayerById(playerId)
         if (player_exists.rows.length === 0 && !LOBBY.players.some(p => p.id === playerId)) {
           ws.send(JSON.stringify({ type: 'validation_result', valid: false }));

@@ -64,7 +64,7 @@ class Player:
             self.velocity = self.speed * (DASH_FACTOR if self.player_state == 'dash' else 1)
             self.last_tap_time[pygame.K_RIGHT] = now
 
-    def update(self):
+    def update(self, opponent_walking_in: bool):
         self.player_assets.get_animation(self.player_state).update()
         if self.player_state not in NO_SFX_STATES:
             self.sound_loader.get_sound(self.player_state).play()
@@ -89,7 +89,8 @@ class Player:
             if self.player_assets.get_animation(self.player_state).is_finished():
                 pass
         else:
-            self.handle_keys()
+            if not opponent_walking_in:
+                self.handle_keys()
         
         if self.player_state in ['walk', 'dash']:
             player_state_mod = self.player_state + ('_right' if self.velocity > 0 else '_left')

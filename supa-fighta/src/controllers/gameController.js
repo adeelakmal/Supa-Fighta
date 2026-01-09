@@ -48,7 +48,7 @@ class Game {
         // Advance timer and check for end
         this.timer--;
         if (this.timer <= 0) {
-            this.end(null); // Draw or time-out
+            this.end(null, null); // Draw or time-out
         }
     }
 
@@ -104,6 +104,7 @@ class Game {
                     console.log(`Player ${playerId} punched Player ${otherId}`);
                     this.winner = this.player1.id === playerId ? this.player1 : this.player2;
                     this.losser = this.player1.id === playerId ? this.player2 : this.player1;
+                    this.end(this.winner, this.losser);
                 }
                 break;
             case 'parry':
@@ -174,7 +175,7 @@ class Game {
         this.sendToOpponent(playerId, message);
     }
 
-    async end(winner) {
+    async end(winner, losser) {
 
         clearInterval(this.interval);
         this.status = 1;

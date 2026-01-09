@@ -65,6 +65,8 @@ class WSClient:
                     data = json.loads(msg)
                     self._response = data
                     self._response_event.set()
+                    if data.get('type') == 'error':
+                        print(f"❌ Server error: {data.get('message')}")
                     
                     if data.get('type') == 'player_created':
                         player_id = data.get('playerId')

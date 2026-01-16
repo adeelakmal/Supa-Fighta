@@ -1,9 +1,12 @@
 import threading
+import pygame
 import websocket
 import json
 import asyncio
 import config
 from player_manager import save_player_id
+import tkinter as tk
+from tkinter import messagebox
 
 class WSClient:
     """
@@ -67,6 +70,13 @@ class WSClient:
                     self._response_event.set()
                     if data.get('type') == 'error':
                         print(f"❌ Server error: {data.get('message')}")
+                        error_message = data.get('message')
+                        root = tk.Tk()
+                        root.withdraw()
+                        messagebox.showerror("Server Error", error_message)
+                        root.destroy()
+                        pygame.event.post(pygame.event.Event(pygame.QUIT))
+                        return
                     
                     if data.get('type') == 'player_created':
                         player_id = data.get('playerId')

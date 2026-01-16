@@ -6,7 +6,6 @@ from game.player import Player
 from animations.sprites import SpriteSheet
 from animations.animation import Animator
 from type.sprite import SpriteProperties
-from server.ws_client import WSClient
 
 class LobbyState:
 

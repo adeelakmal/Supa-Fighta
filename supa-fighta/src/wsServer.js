@@ -27,7 +27,7 @@ const setupWebSocketServer = (port) => {
       }else{
         HandleMessage(ws, message).catch(err=>{
           console.error('Error handling message:', err);
-          ws.send(JSON.stringify({ type: 'error', message: `Error processing message: ${err}` }));
+          ws.send(JSON.stringify({ type: 'error', message: `${err}` }));
         });
       }
 

@@ -13,6 +13,7 @@ class PlayerRepository {
     }
 
     async updatePlayerStats(player){
+        if (!player) return;
         await this.pool.query(`
             UPDATE players
             SET status = $1,

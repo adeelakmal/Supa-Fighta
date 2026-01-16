@@ -27,7 +27,8 @@ const HandleMessage = async (ws, msg) => {
           return
         }
         if (LOBBY.players.some(p => p.id === playerId)) {
-            throw Error("Player already in lobby");
+            ws.send(JSON.stringify({ type: "error", message: "Player already in lobby" }));
+            return
         }
         ws.id = playerId
         const player = new Player(ws, player_exists.rows[0].player_name);

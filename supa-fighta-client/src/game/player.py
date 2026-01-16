@@ -141,3 +141,9 @@ class Player:
 
     def get_hurt_done(self) -> bool:
         return self.hurt_done
+    
+    def player_reset(self):
+        self.hurt_x = None
+        self.hurt_done = False
+        self.player_state = 'wait'
+        self.player_x = (config.WINDOW_WIDTH // 2) - 120

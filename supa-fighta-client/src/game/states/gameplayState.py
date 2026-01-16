@@ -39,8 +39,12 @@ class GameplayState:
         pygame.mixer.music.play(-1,0,0)
         self.opponent.walk_into_frame()
         self.running = True
+
     def exit(self):
         self.running = False
+        self.player.player_reset()
+        self.opponent.opponent_reset()
+
     def update(self):
         self.background.update()
         if self.player.player_state == 'wait':
@@ -73,14 +77,14 @@ class GameplayState:
         
         # temp repositioning  
         last_opponent_update = self.player.net.get_last_opponent_update()
-        if last_opponent_update and not self.opponent.walking_in:
+        if last_opponent_update and not self.opponent.walking_in and not self.game_over:
             opp_state = last_opponent_update.get("current_state", "idle")
             opp_position = last_opponent_update.get("position").get("x", self.opponent.opponent_x)
             self.opponent.reset_position(opp_position, opp_state) #using player speed to judge if the opponent is being pushed
         last_player_correction = self.player.net.get_last_player_correction()
-        if last_player_correction and self.player.player_state !='hurt': # correct only if not hurt
+        if last_player_correction and not self.game_over:
             # print(f"Applying correction to player position: {last_player_correction}")
-            self.player.reset_position(last_player_correction)  
+            self.player.reset_position(last_player_correction)
 
         self.opponent.update()
         self.player.update(self.opponent.walking_in) 

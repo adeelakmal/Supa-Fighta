@@ -177,3 +177,9 @@ class Opponent:
     
     def get_hurt_done(self) -> bool:
         return self.hurt_done
+    
+    def opponent_reset(self):
+        self.hurt_x = None
+        self.hurt_done = False
+        self.walking_in = True
+        self.opponent_state = 'idle'

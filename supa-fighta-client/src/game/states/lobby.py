@@ -11,7 +11,7 @@ class LobbyState:
 
     def __init__(self, state_manager):
         self.state_manager = state_manager
-        self.lobby_state = "Waiting for a game"
+        self.lobby_state = "Waiting for a game..."
         self.font = pygame.font.Font(None, 18)
         self.background_sprites = SpriteSheet(
             SpriteProperties(
@@ -27,7 +27,8 @@ class LobbyState:
 
     def enter(self):
         self.running = True
-        self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
+        if self.player is None:
+            self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
     def exit(self):
         self.running = False
      
@@ -53,6 +54,4 @@ class LobbyState:
     
     def check_for_match(self, server_message: Dict):
         if 'match_created' in server_message.get('type') and (server_message.get('player1', None) == config.PLAYER_ID or server_message.get('player2', None) == config.PLAYER_ID):
-                self.lobby_state = "Match found! Starting game..."
-                pygame.time.delay(1000)
                 self.state_manager.change_state("gameplay")

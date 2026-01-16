@@ -57,14 +57,16 @@ class Opponent:
                 self.velocity = self.speed
             
             case "dash_left":
-                self.opponent_state = 'dash'
-                self.opponent_assets.get_animation('dash').reset()
-                self.velocity = -self.speed * DASH_FACTOR
+                if self.opponent_state != 'dash':
+                    self.opponent_state = 'dash'
+                    self.opponent_assets.get_animation('dash').reset()
+                    self.velocity = -self.speed * DASH_FACTOR
             
             case "dash_right":
-                self.opponent_state = 'dash'
-                self.opponent_assets.get_animation('dash').reset()
-                self.velocity = self.speed * DASH_FACTOR
+                if self.opponent_state != 'dash':
+                    self.opponent_state = 'dash'
+                    self.opponent_assets.get_animation('dash').reset()
+                    self.velocity = -self.speed * DASH_FACTOR
             
             case _:
                 pass

@@ -6,6 +6,7 @@ class Player {
       this.status = 0;
       this.match_id = null;
       this.win_streak = win_streak
+      this.max_streak = win_streak
       this.total_wins = total_wins
       this.total_losses = total_losses
     }

@@ -110,7 +110,7 @@ class Game {
             case 'parry':
                 break;
             default:
-                console.log("Unknown input:", input);
+                // console.log("Unknown input:", input);
                 break;
         }
     }
@@ -149,7 +149,10 @@ class Game {
         let x = player_state.x;
         const serverPos = this.positions[playerId];
         history.forEach((input, index) => {
-            this.processInput(playerId, input); 
+            if (this.status!=1) {
+                this.processInput(playerId, input); 
+            }
+            
         })
         if (history[history.length - 1] === "dash_right") {
             console.log(`Player ${playerId} history: ${history}`);
@@ -185,24 +188,20 @@ class Game {
         // Update players' stats
         if (winner) {
             winner.total_wins++;
-            winner.current_streak++;
-            winner.max_streak = Math.max(winner.max_streak, winner.current_streak);
+            winner.win_streak++;
+            winner.max_streak = Math.max(winner.max_streak, winner.win_streak);
             winner.status = 0;
             losser.total_losses++;
-            losser.current_streak = 0;
+            losser.win_streak = 0;
             losser.status = 0;
         } else {
             this.player1.total_losses++;
-            this.player1.current_streak = 0;
+            this.player1.win_streak = 0;
             this.player1.status = 0;
             this.player2.total_losses++;
-            this.player2.current_streak = 0;
+            this.player2.win_streak = 0;
             this.player2.status = 0;
         }
-
-        /**
-         * TODO: Update all the player stats in the db when they leave the server this helps reduce total db calls made
-         */
 
         // Notify players that the game has ended
         this.player1.ws.send(JSON.stringify({ type: 'game_end', winner: winner ? winner.id : null }));

@@ -28,7 +28,7 @@ jobs:
       - name: Build the game client
         run: |
           cd supa-fighta-client
-          pyinstaller --onefile src/main.py --no-console
+          pyinstaller --onefile src/main.py --noconsole
           cp assets/* dist/
 
       - name: Upload build artifacts

@@ -29,7 +29,8 @@ jobs:
         run: |
           cd supa-fighta-client
           pyinstaller --onefile src/main.py --noconsole
-          cp -r assets/* dist/
+          mkdir -p dist
+          cp -r assets dist/
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

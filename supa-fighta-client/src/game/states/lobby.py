@@ -62,6 +62,5 @@ class LobbyState:
     def send_player_rejoined(self):
         if self.player:
             self.player.net.send({
-                "type": "player_rejoined",
-                "playerId": config.PLAYER_ID
+                "type": "player_rejoined"
             })

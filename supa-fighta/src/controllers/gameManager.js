@@ -21,15 +21,6 @@ class GameManager {
         }
     }
 
-
-    endGame(matchId) {
-        delete this.activeGames[matchId];
-        for (const pid in this.playerToGame) {
-            if (this.playerToGame[pid] === matchId) {
-                delete this.playerToGame[pid];
-            }
-        }
-    }
 }
 
 module.exports = new GameManager();

@@ -190,17 +190,13 @@ class Game {
             winner.total_wins++;
             winner.win_streak++;
             winner.max_streak = Math.max(winner.max_streak, winner.win_streak);
-            winner.status = 0;
             losser.total_losses++;
             losser.win_streak = 0;
-            losser.status = 0;
         } else {
             this.player1.total_losses++;
             this.player1.win_streak = 0;
-            this.player1.status = 0;
             this.player2.total_losses++;
             this.player2.win_streak = 0;
-            this.player2.status = 0;
         }
 
         // Notify players that the game has ended

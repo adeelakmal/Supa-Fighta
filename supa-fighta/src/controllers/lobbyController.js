@@ -42,6 +42,9 @@ const HandleMessage = async (ws, msg) => {
         LOBBY.players.push(player);
         ws.send(JSON.stringify({ type: 'player_created', playerId: player.id }));
         broadcastToLobby(LOBBY, { type: 'player_joined', playerId: player.id });
+    } else if (type === "player_rejoined") {
+        const player = LOBBY.players.find(p => p.id === ws.id);
+        player.status = 0;
     }
 };
 

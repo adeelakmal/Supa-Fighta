@@ -20,7 +20,7 @@ class MainMenuState:
         self.buttons[self.selected_index].set_selected(True)
         self.background_sprites = SpriteSheet(
             SpriteProperties(
-                path="./supa-fighta-client/assets/background.png",
+                path="assets/background.png",
                 width=config.WINDOW_WIDTH,
                 height=config.WINDOW_HEIGHT,
                 rows=1,

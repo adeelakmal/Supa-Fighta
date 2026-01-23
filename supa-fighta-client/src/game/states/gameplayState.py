@@ -20,7 +20,7 @@ class GameplayState:
         self.opponent = Opponent(config.WINDOW_WIDTH, config.WINDOW_HEIGHT - (120 + 20))
         self.background_sprites = SpriteSheet(
             SpriteProperties(
-                path="./supa-fighta-client/assets/background.png",
+                path="assets/background.png",
                 width=config.WINDOW_WIDTH,
                 height=config.WINDOW_HEIGHT,
                 rows=1,

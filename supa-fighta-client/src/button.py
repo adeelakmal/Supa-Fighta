@@ -3,7 +3,7 @@ from sound_loader import SoundLoader
 
 class Button:
     def __init__(self, x, y, text, font_color=(216, 138, 97)):
-        self.font = pygame.font.Font("./supa-fighta-client/assets/RamadhanMubarok.otf", 30)
+        self.font = pygame.font.Font("assets/RamadhanMubarok.otf", 30)
         self.default_color = font_color
         self.font_color = font_color
         self.rect = pygame.Rect(x, y, 100, 25)

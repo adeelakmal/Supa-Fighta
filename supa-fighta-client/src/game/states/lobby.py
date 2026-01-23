@@ -15,7 +15,7 @@ class LobbyState:
         self.font = pygame.font.Font(None, 18)
         self.background_sprites = SpriteSheet(
             SpriteProperties(
-                path="./supa-fighta-client/assets/background.png",
+                path="assets/background.png",
                 width=config.WINDOW_WIDTH,
                 height=config.WINDOW_HEIGHT,
                 rows=1,

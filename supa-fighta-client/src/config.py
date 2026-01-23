@@ -10,7 +10,7 @@ DEBUG = True
 # Sprites 
 SPRITES = {
     "idle": {
-        "path": "./supa-fighta-client/assets/Idel.png",
+        "path": "assets/Idel.png",
         "rows": 1,
         "cols": 5,
         "width": 120,
@@ -21,7 +21,7 @@ SPRITES = {
         "loop": True,
     },
     "walk": {
-        "path": "./supa-fighta-client/assets/Walk.png",
+        "path": "assets/Walk.png",
         "rows": 1,
         "cols": 5,
         "width": 120,
@@ -32,7 +32,7 @@ SPRITES = {
         "loop": True,
     },
     "dash": {
-        "path": "./supa-fighta-client/assets/Dash.png",
+        "path": "assets/Dash.png",
         "rows": 1,
         "cols": 5,
         "width": 120,
@@ -43,7 +43,7 @@ SPRITES = {
         "loop": False,
     },
     "punch": {
-        "path": "./supa-fighta-client/assets/Punch.png",
+        "path": "assets/Punch.png",
         "rows": 1,
         "cols": 9,
         "width": 120,
@@ -54,7 +54,7 @@ SPRITES = {
         "loop": False,
     },
     "parry": {
-        "path": "./supa-fighta-client/assets/Parry.png",
+        "path": "assets/Parry.png",
         "rows": 1,
         "cols": 5,
         "width": 120,
@@ -65,7 +65,7 @@ SPRITES = {
         "loop": False,
     },
     "wait": {
-        "path": "./supa-fighta-client/assets/Wait.png",
+        "path": "assets/Wait.png",
         "rows": 1,
         "cols": 7,
         "width": 120,
@@ -76,7 +76,7 @@ SPRITES = {
         "loop": True,
     },
     "hurt": {
-        "path": "./supa-fighta-client/assets/Hurt.png",
+        "path": "assets/Hurt.png",
         "rows": 1,
         "cols": 8,
         "width": 120,
@@ -87,7 +87,7 @@ SPRITES = {
         "loop": False,
     },
     "win": {
-        "path": "./supa-fighta-client/assets/Win.png",
+        "path": "assets/Win.png",
         "rows": 1,
         "cols": 9,
         "width": 120,
@@ -98,7 +98,7 @@ SPRITES = {
         "loop": False,
     },
     "parry-hit": {
-        "path": "./supa-fighta-client/assets/Parry-Hit.png",
+        "path": "assets/Parry-Hit.png",
         "rows": 1,
         "cols": 4,
         "width": 120,
@@ -109,7 +109,7 @@ SPRITES = {
         "loop": False,
     },
         "parried": {
-        "path": "./supa-fighta-client/assets/Parried.png",
+        "path": "assets/Parried.png",
         "rows": 1,
         "cols": 4,
         "width": 120,
@@ -130,28 +130,28 @@ RECOVERY_DURATIONS = {
 # SOUND EFFECTS
 SOUND = {
     "punch" : {
-        "path": "./supa-fighta-client/assets/punch.wav"
+        "path": "assets/punch.wav"
     },
     "dash" : {
-        "path": "./supa-fighta-client/assets/dash.wav"
+        "path": "assets/dash.wav"
     },
     "parry" : {
-        "path": "./supa-fighta-client/assets/parry.wav"
+        "path": "assets/parry.wav"
     },
     "button_hover" : {
-        "path": "./supa-fighta-client/assets/button_hover.wav",
+        "path": "assets/button_hover.wav",
         "min_repeat_gap_ms": 50
     },
     "button_select" : {
-        "path": "./supa-fighta-client/assets/button_select.wav",
+        "path": "assets/button_select.wav",
         "min_repeat_gap_ms": 250
     }
 }
 
 # BACKGROUND MUSIC
 MUSIC = {
-    "menu" : "./supa-fighta-client/assets/menu_music.wav",
-    "fight" : "./supa-fighta-client/assets/fight_music.wav"
+    "menu" : "assets/menu_music.wav",
+    "fight" : "assets/fight_music.wav"
 }
 
 # WebSocket settings

@@ -29,6 +29,9 @@ class LobbyState:
         self.running = True
         if self.player is None:
             self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
+        else:
+            self.send_player_rejoined()
+
     def exit(self):
         self.running = False
      
@@ -55,3 +58,10 @@ class LobbyState:
     def check_for_match(self, server_message: Dict):
         if 'match_created' in server_message.get('type') and (server_message.get('player1', None) == config.PLAYER_ID or server_message.get('player2', None) == config.PLAYER_ID):
                 self.state_manager.change_state("gameplay")
+
+    def send_player_rejoined(self):
+        if self.player:
+            self.player.net.send({
+                "type": "player_rejoined",
+                "playerId": config.PLAYER_ID
+            })

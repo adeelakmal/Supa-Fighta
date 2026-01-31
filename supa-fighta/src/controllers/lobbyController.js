@@ -50,9 +50,25 @@ const HandleMessage = async (ws, msg) => {
 
 const HandleClose = async (ws) => {
     const player = LOBBY.players.find(p => p.id === ws.id);
-    await playerRepository.updatePlayerStats(player);
+    if (!player) {
+        console.warn(`Player with ID ${ws.id} not found in the lobby.`);
+        return;
+    }
+
+    if (!player.id) {
+        console.error(`Player object is missing an ID:`, player);
+        return;
+    }
+
+    try {
+        await playerRepository.updatePlayerStats(player);
+    } catch (err) {
+        console.error(`Failed to update player stats for ${ws.id}:`, err);
+    }
+
     // Remove the player from the lobby
-    LOBBY.players = LOBBY.players.filter(p => p.id !== ws.id);   
+    LOBBY.players = LOBBY.players.filter(p => p.id !== ws.id);
+    console.log(`Current lobby players:`, LOBBY.players.map(p => p.id));
     broadcastToLobby(LOBBY, { type: 'player_left', playerId: ws.id });
 };
 

@@ -33,7 +33,15 @@ const setupWebSocketServer = (port) => {
 
     });
 
-    ws.on('close', () => HandleClose(ws));
+    ws.on('close', async (code, reason) => {
+    console.log(`WebSocket closed for player ${ws.id}. Code: ${code}, Reason: ${reason}`);
+    await HandleClose(ws);
+    });
+
+    ws.on('error', (err) => {
+        console.error(`WebSocket error for player ${ws.id}:`, err);
+    });
+
   });
 
   // Periodically run matchmaking

@@ -9,7 +9,6 @@ def main(PlayerDataFile="player_data.dat"):
     pygame.display.set_caption("Supa Fighta")
     clock = pygame.time.Clock() 
     gameState = GameState()
-    ws_client = None
    
     try:
         running = True
@@ -30,11 +29,6 @@ def main(PlayerDataFile="player_data.dat"):
         print(f"An error occurred: {e}")
         
     finally:
-        current_state = gameState.current_state
-        if hasattr(current_state, 'player') and current_state.player is not None:
-            if hasattr(current_state.player, 'net') and current_state.player.net is not None:
-                print("Closing WebSocket connection...")
-                current_state.player.net.close()
         pygame.quit()
         sys.exit()
 

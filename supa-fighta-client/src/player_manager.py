@@ -3,7 +3,7 @@ import pickle
 
 
 def load_player_id(PlayerDataFile):
-    if not os.path.exists(PlayerDataFile):
+    if not os.path.exists(PlayerDataFile) or os.path.getsize(PlayerDataFile) == 0:
         with open(PlayerDataFile, "wb") as f:
             pass
         return None

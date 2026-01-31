@@ -22,7 +22,8 @@ class WSClient:
         self.last_opponent_update = None
         self.last_player_correction = None
         self._response_event = threading.Event()
-        threading.Thread(target=self._start_async_recv_loop, daemon=True).start()
+        self._recv_thread = threading.Thread(target=self._start_async_recv_loop, daemon=True)
+        self._recv_thread.start()
         if config.PLAYER_ID:
             self.send({"type":'validate_player', "playerId": config.PLAYER_ID})
         else:
@@ -33,7 +34,10 @@ class WSClient:
         """
         Serialise to JSON and push to the server.
         """
-        self.ws.send(json.dumps(payload))
+        try:
+            self.ws.send(json.dumps(payload))
+        except Exception as e:
+            print(f"Failed to send message: {e}")
     
     def send_snapshot(self, snapshot: dict):
         self._response_event.clear()
@@ -52,8 +56,13 @@ class WSClient:
         return correction
 
     def close(self):
+        """Close the WebSocket connection gracefully."""
+        print("Closing WebSocket connection...")
         self._running = False
-        self.ws.close()
+        try:
+            self.ws.close()
+        except Exception as e:
+            print(f"Error closing WebSocket: {e}")
 
     def _start_async_recv_loop(self):
         loop = asyncio.new_event_loop()
@@ -89,11 +98,10 @@ class WSClient:
                     if data.get('type') == 'correction':
                         self.last_player_correction = float(data.get('position'))
 
-                    #TODO: Add logic in the game state to correct any discrepancies
-                    # If message recieved is a snapshot ack, dont need to do anything
-                    # If message recieved asks to correct game state, do so
-                    # print("Srv ▸", msg)
             except websocket.WebSocketConnectionClosedException:
+                print("WebSocket connection closed by server")
                 break
-            except Exception:
+            except Exception as e:
+                if self._running:
+                    print(f"Error in receive loop: {e}")
                 await asyncio.sleep(0.1)

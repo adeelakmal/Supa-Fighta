@@ -130,6 +130,7 @@ class Game {
             case 'parry':
                 let player = this.player1.id === playerId ? this.player1 : this.player2;
                 player.state = Inputs.PARRY
+                break;
             default:
                 // console.log("Unknown input:", input);
                 break;

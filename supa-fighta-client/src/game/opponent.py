@@ -47,7 +47,16 @@ class Opponent:
                 if self.opponent_state != "parry":
                     self.opponent_state = "parry"
                     self.opponent_assets.get_animation('parry').reset()
-            
+
+            case "parry-hit":
+                if self.opponent_state != "parry-hit":
+                    self.opponent_state = "parry-hit"
+                    self.opponent_assets.get_animation('parry-hit').reset()
+
+            case "parried":
+                if self.opponent_state != "parried":
+                    self.opponent_state = "parried"
+                    self.opponent_assets.get_animation('parried').reset()
             case "walk_left":
                 self.opponent_state = 'walk'
                 self.velocity = -self.speed

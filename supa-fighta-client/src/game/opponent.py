@@ -72,11 +72,11 @@ class Opponent:
                 pass
     
     def intro_walk(self):        
-        if self.opponent_x > config.WINDOW_WIDTH // 2:
+        if self.opponent_x > (config.WINDOW_WIDTH // 2) + (config.PLAYER_WIDTH // 2):
             self.opponent_x -= 2  
             self.opponent_state = 'walk'
         else:
-            self.opponent_x = config.WINDOW_WIDTH // 2
+            self.opponent_x = (config.WINDOW_WIDTH // 2) + (config.PLAYER_WIDTH // 2)
             self.opponent_state = 'idle'
             self.opponent_assets.get_animation('walk').reset()
             self.walking_in = False

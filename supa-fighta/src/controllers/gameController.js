@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const MatchesRepository = require('../repositories/matchesRepository');
 const PlayerState = require('../models/playerState');
+const { Inputs } = require('../enums');
 const DASH_FACTOR = 2.5
 
 class Game {
@@ -115,14 +116,20 @@ class Game {
                 break;
             case 'punch':
                 if(pos.x+80+30 > reversedOtherPos.x) {
-                    console.log(`Player ${playerId} punched Player ${otherId}`);
-                    this.winner = this.player1.id === playerId ? this.player1 : this.player2;
-                    this.losser = this.player1.id === playerId ? this.player2 : this.player1;
-                    this.end(this.winner, this.losser);
+                    let otherPlayer = this.player1.id === otherId ? this.player1 : this.player2;
+                    if (otherPlayer.state == Inputs.PARRY){
+                        console.log(`Player ${otherId} parried Player ${playerId}`);
+                    } else {
+                        console.log(`Player ${playerId} punched Player ${otherId}`);
+                        this.winner = this.player1.id === playerId ? this.player1 : this.player2;
+                        this.losser = this.player1.id === playerId ? this.player2 : this.player1;
+                        this.end(this.winner, this.losser);
+                    }
                 }
                 break;
             case 'parry':
-                break;
+                let player = this.player1.id === playerId ? this.player1 : this.player2;
+                player.state = Inputs.PARRY
             default:
                 // console.log("Unknown input:", input);
                 break;

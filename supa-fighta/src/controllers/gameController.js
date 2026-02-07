@@ -58,11 +58,12 @@ class Game {
         const pos = this.positions[playerId];
         let otherPos = this.positions[otherId];
         let reversedOtherPos = this.reversePosition(otherPos);
+        let player = this.player1.id === playerId ? this.player1 : this.player2;
         // console.log(`Reversed opponent position for processing:`, otherPos);
 
         switch (input) {
             case 'idle':
-                // do nothing
+                player.state = Inputs.IDEL
                 break;
             case 'walk_left':
                 if ( pos.x - this.moveStep > 0 ) {
@@ -128,7 +129,6 @@ class Game {
                 }
                 break;
             case 'parry':
-                let player = this.player1.id === playerId ? this.player1 : this.player2;
                 player.state = Inputs.PARRY
                 break;
             default:

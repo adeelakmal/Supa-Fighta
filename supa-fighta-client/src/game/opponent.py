@@ -66,7 +66,7 @@ class Opponent:
                 if self.opponent_state != 'dash':
                     self.opponent_state = 'dash'
                     self.opponent_assets.get_animation('dash').reset()
-                    self.velocity = -self.speed * DASH_FACTOR
+                    self.velocity = self.speed * DASH_FACTOR
             
             case _:
                 pass

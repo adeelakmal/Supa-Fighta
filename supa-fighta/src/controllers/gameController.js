@@ -75,7 +75,7 @@ class Game {
                 if ( pos.x + this.moveStep <= reversedOtherPos.x - 80 ) {
                     pos.x += this.moveStep;
                 }
-                else if ( pos.x + this.moveStep > 640 - (80*2) ) {
+                else if ( pos.x + this.moveStep > 640 - (80*2)) {
                     console.log("right side limit reached");
                     pos.x = 640 - (80*2);
                 }
@@ -90,13 +90,27 @@ class Game {
                 }
                 break;
             case 'dash_left':
-                if (pos.x - this.moveStep < reversedOtherPos.x || pos.x - this.moveStep > reversedOtherPos.x ) {
-                    pos.x -= this.moveStep * (DASH_FACTOR-0.5);
+                if ( pos.x - this.moveStep > 0 ) {
+                    pos.x -= this.moveStep * (DASH_FACTOR - 0.5);
+                }
+                else {
+                    pos.x = 0;
                 }
                 break;
             case 'dash_right':
-                if (pos.x + this.moveStep > reversedOtherPos.x || pos.x + this.moveStep < reversedOtherPos.x ) {
+                if (pos.x + (this.moveStep * DASH_FACTOR) <= reversedOtherPos.x - 80 ) {
                     pos.x += this.moveStep * DASH_FACTOR;
+                }
+                else if ( pos.x + (this.moveStep * DASH_FACTOR) > 640 - (80*2)) {
+                    console.log("right side limit reached");
+                    pos.x = 640 - (80 * 2);
+                } 
+                else {
+                    // else players are definitely overlapping so we add pushing logic here
+                    console.log("players pushing");
+                    pos.x += 1 * DASH_FACTOR;
+                    reversedOtherPos.x = Math.min(640 - 80, (pos.x + 80));
+                    otherPos.x = this.reversePosition(reversedOtherPos).x;
                 }
                 break;
             case 'punch':

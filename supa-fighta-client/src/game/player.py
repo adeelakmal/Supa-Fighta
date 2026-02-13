@@ -19,6 +19,7 @@ class Player:
         self.player_y = y
         self.speed = 2
         self.player_state ='wait'
+        self.parry_hit_registered = False
         self.velocity = 0
         self.hurt_x=None
         self.hurt_done=False
@@ -78,9 +79,13 @@ class Player:
                 new_x = config.WINDOW_WIDTH - sprite_width*2
             self.player_x = new_x
 
-        if self.player_state in ACTIONABLE_STATES:
-            if self.player_assets.get_animation(self.player_state).is_finished():
-                self.player_state = 'idle'
+       if self.player_state in ACTIONABLE_STATES:
+                if self.player_assets.get_animation(self.player_state).is_finished():
+                    if self.parry_hit_registered and self.player_state == 'parry':
+                        self.player_state = 'parry-hit'
+                        self.parry_hit_registered = False
+                    else:
+                        self.player_state = 'idle'
         elif self.player_state in END_STATES:   
             if self.player_state == 'hurt' and self.hurt_x is not None:
                 if self.player_x > self.hurt_x - 8:

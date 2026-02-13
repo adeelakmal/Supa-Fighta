@@ -79,31 +79,31 @@ class Player:
                 new_x = config.WINDOW_WIDTH - sprite_width*2
             self.player_x = new_x
 
-            if self.player_state in ACTIONABLE_STATES:
+       if self.player_state in ACTIONABLE_STATES:
                 if self.player_assets.get_animation(self.player_state).is_finished():
                     if self.parry_hit_registered and self.player_state == 'parry':
                         self.player_state = 'parry-hit'
                         self.parry_hit_registered = False
                     else:
                         self.player_state = 'idle'
-            elif self.player_state in END_STATES:   
-                if self.player_state == 'hurt' and self.hurt_x is not None:
-                    if self.player_x > self.hurt_x - 8:
-                        self.player_x -= 2
-                    else:
-                        self.hurt_done=True
-                if self.player_assets.get_animation(self.player_state).is_finished():
-                    pass
-            else:
-                if not opponent_walking_in:
-                    self.handle_keys()
-        
-            if self.player_state in ['walk', 'dash']:
-                player_state_mod = self.player_state + ('_right' if self.velocity > 0 else '_left')
-                self._inputs.append(player_state_mod)
+        elif self.player_state in END_STATES:   
+            if self.player_state == 'hurt' and self.hurt_x is not None:
+                if self.player_x > self.hurt_x - 8:
+                    self.player_x -= 2
+                else:
+                    self.hurt_done=True
+            if self.player_assets.get_animation(self.player_state).is_finished():
+                pass
+        else:
+            if not opponent_walking_in and not game_over:
+                self.handle_keys()
+    
+        if self.player_state in ['walk', 'dash']:
+            player_state_mod = self.player_state + ('_right' if self.velocity > 0 else '_left')
+            self._inputs.append(player_state_mod)
 
-            else:
-                self._inputs.append(self.player_state)
+        else:
+            self._inputs.append(self.player_state)
 
     def draw(self, surface):
         self.player_assets.get_animation(self.player_state).draw(surface, (self.player_x, self.player_y))

@@ -64,40 +64,41 @@ class Player:
             self.velocity = self.speed * (DASH_FACTOR if self.player_state == 'dash' else 1)
             self.last_tap_time[pygame.K_RIGHT] = now
 
-    def update(self, opponent_walking_in: bool):
+    def update(self, opponent_walking_in: bool, game_over: bool):
         self.player_assets.get_animation(self.player_state).update()
         if self.player_state not in NO_SFX_STATES:
             self.sound_loader.get_sound(self.player_state).play()
         new_x = self.player_x + self.velocity
         
-        sprite_width = 80
-        if new_x < 0:
-            new_x = 0
-        elif new_x > config.WINDOW_WIDTH - sprite_width*2:
-            new_x = config.WINDOW_WIDTH - sprite_width*2
-        self.player_x = new_x
+        if not game_over:
+            sprite_width = 80
+            if new_x < 0:
+                new_x = 0
+            elif new_x > config.WINDOW_WIDTH - sprite_width*2:
+                new_x = config.WINDOW_WIDTH - sprite_width*2
+            self.player_x = new_x
 
-        if self.player_state in ACTIONABLE_STATES:
-            if self.player_assets.get_animation(self.player_state).is_finished():
-                self.player_state = 'idle'
-        elif self.player_state in END_STATES:   
-            if self.player_state == 'hurt' and self.hurt_x is not None:
-                if self.player_x > self.hurt_x - 8:
-                    self.player_x -= 2
-                else:
-                    self.hurt_done=True
-            if self.player_assets.get_animation(self.player_state).is_finished():
-                pass
-        else:
-            if not opponent_walking_in:
-                self.handle_keys()
+            if self.player_state in ACTIONABLE_STATES:
+                if self.player_assets.get_animation(self.player_state).is_finished():
+                    self.player_state = 'idle'
+            elif self.player_state in END_STATES:   
+                if self.player_state == 'hurt' and self.hurt_x is not None:
+                    if self.player_x > self.hurt_x - 8:
+                        self.player_x -= 2
+                    else:
+                        self.hurt_done=True
+                if self.player_assets.get_animation(self.player_state).is_finished():
+                    pass
+            else:
+                if not opponent_walking_in:
+                    self.handle_keys()
         
-        if self.player_state in ['walk', 'dash']:
-            player_state_mod = self.player_state + ('_right' if self.velocity > 0 else '_left')
-            self._inputs.append(player_state_mod)
+            if self.player_state in ['walk', 'dash']:
+                player_state_mod = self.player_state + ('_right' if self.velocity > 0 else '_left')
+                self._inputs.append(player_state_mod)
 
-        else:
-            self._inputs.append(self.player_state)
+            else:
+                self._inputs.append(self.player_state)
 
     def draw(self, surface):
         self.player_assets.get_animation(self.player_state).draw(surface, (self.player_x, self.player_y))
@@ -147,3 +148,8 @@ class Player:
         self.hurt_done = False
         self.player_state = 'wait'
         self.player_x = (config.WINDOW_WIDTH // 2) - 120
+        self.last_tap_time = {pygame.K_LEFT: 0, pygame.K_RIGHT: 0}
+        self._inputs = []
+        self.recovery_until = 0
+        self.player_assets.get_animation('win').reset()
+        self.player_assets.get_animation('hurt').reset()

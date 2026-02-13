@@ -20,6 +20,7 @@ class GameState:
         
         if self.current_state:
             self.current_state.exit()
+            self.current_state = None
         self.current_state = self.states.get(new_state)
         if self.current_state:
             self.current_state.enter()

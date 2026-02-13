@@ -16,10 +16,19 @@ class GameManager {
         if (player.matchId === null) return;
 
         const game = this.activeGames.find(g => g.matchId === player.match_id);
+        if (game.status === 1) return; // Game has ended, ignore inputs
         if (game) {
             game.validateState(playerId, snapshot);
         }
     }
+
+    // destroyGame(matchId) {
+    //     const gameIndex = this.activeGames.findIndex(g => g.matchId === matchId);
+    //     if (gameIndex !== -1) {
+    //         clearInterval(this.activeGames[gameIndex].interval);
+    //         this.activeGames.splice(gameIndex, 1);
+    //     }
+    // }
 
 }
 

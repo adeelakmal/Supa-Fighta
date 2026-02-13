@@ -97,6 +97,7 @@ class WSClient:
                         self.last_opponent_update = data
                     if data.get('type') == 'correction':
                         self.last_player_correction = float(data.get('position'))
+                        print(f"Received position correction from server: {self.last_player_correction}")
 
             except websocket.WebSocketConnectionClosedException:
                 print("WebSocket connection closed by server")

@@ -28,8 +28,7 @@ class Collision:
             else:
                 if DEBUG:
                     print("Opponent parried the attack!")
-                opponent.set_state('parry-hit')
-                player.set_state('parried')
+                opponent.parry_hit_registered = True
                 player.recovery_until+=300
         elif opponent_hitbox and opponent_hitbox.colliderect(player_hurtbox):
             if DEBUG and player.player_state!="parry":
@@ -41,8 +40,7 @@ class Collision:
             else:
                 if DEBUG:
                     print("Player parried the attack!")
-                player.set_state('parry-hit')
-                opponent.set_state('parried')
+                player.parry_hit_registered = True
                 opponent.recovery_until+=300
         return False
     def debug_draw(surface: pygame.Surface, player: Player, opponent: Opponent):

@@ -96,11 +96,12 @@ class GameplayState:
             # print(f"Applying correction to player position: {last_player_correction}")
             self.player.reset_position(last_player_correction)
 
+        # TODO: show victory screen and go back to lobby
+        Collision.check_collision(self.player, self.opponent)
+        
         self.opponent.update(self.game_over)
         self.player.update(self.opponent.walking_in, self.game_over)
 
-        # TODO: show victory screen and go back to lobby
-        Collision.check_collision(self.player, self.opponent)
 
         if self.player.get_hurt_done() and self.player.player_assets.get_animation('hurt').is_finished():
             self.opponent.set_state('win')

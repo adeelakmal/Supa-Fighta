@@ -16,6 +16,7 @@ class Opponent:
         self.velocity = 0        
         # self.net = net
         self.walking_in = True
+        self.parry_hit_registered = False
         self.hurt_x=None
         self.hurt_done=False
         # Simple smooth-move state for reset_position
@@ -139,7 +140,11 @@ class Opponent:
 
             if self.opponent_state in ACTIONABLE_STATES:
                 if self.opponent_assets.get_animation(self.opponent_state).is_finished():
-                    self.opponent_state = 'idle'
+                    if self.parry_hit_registered and self.opponent_state == 'parry':
+                        self.opponent_state = 'parry-hit'
+                        self.parry_hit_registered = False
+                    else:
+                        self.opponent_state = 'idle'
             elif self.opponent_state in END_STATES:
                 if self.opponent_state == 'hurt' and self.hurt_x is not None:
                     if self.opponent_x < self.hurt_x + 8:

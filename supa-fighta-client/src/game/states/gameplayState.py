@@ -33,6 +33,7 @@ class GameplayState:
         self.game_over = False
         self.final_message = None
         self._game_end_time = None
+        self.winner = None
 
     def enter(self):        
         pygame.mixer.music.load(config.MUSIC["fight"])
@@ -47,6 +48,13 @@ class GameplayState:
 
     def update(self):
         self.background.update()
+        if self.winner==self.player:
+            if self.winner.player_assets.get_animation(self.winner.player_state).is_finished():
+                self.winner.set_state('win')
+        if self.winner==self.opponent:
+            if self.winner.opponent_assets.get_animation(self.winner.opponent_state).is_finished():
+                self.winner.set_state('win')
+
         if self.player.player_state == 'wait':
             self.player.player_state = 'idle'
         server_message = self.player.net.get_last_response()
@@ -62,6 +70,8 @@ class GameplayState:
                     self.winner = self.opponent
             else:
                 self.final_message = "Match ended in a draw."
+                self.player.set_state('idle')
+                self.opponent.set_state('idle')
 
         if Collision.check_overlap(self.player, self.opponent):
             if self.player.player_state!="idle":
@@ -86,8 +96,8 @@ class GameplayState:
             # print(f"Applying correction to player position: {last_player_correction}")
             self.player.reset_position(last_player_correction)
 
-        self.opponent.update()
-        self.player.update(self.opponent.walking_in) 
+        self.opponent.update(self.game_over)
+        self.player.update(self.opponent.walking_in, self.game_over)
 
         # TODO: show victory screen and go back to lobby
         Collision.check_collision(self.player, self.opponent)

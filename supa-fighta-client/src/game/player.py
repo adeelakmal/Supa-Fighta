@@ -79,7 +79,7 @@ class Player:
                 new_x = config.WINDOW_WIDTH - sprite_width*2
             self.player_x = new_x
 
-       if self.player_state in ACTIONABLE_STATES:
+        if self.player_state in ACTIONABLE_STATES:
                 if self.player_assets.get_animation(self.player_state).is_finished():
                     if self.parry_hit_registered and self.player_state == 'parry':
                         self.player_state = 'parry-hit'

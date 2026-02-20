@@ -2,7 +2,7 @@
 
 ## Project Description
 
-Supa Fighta is a one-hit KO fighting game designed as a hobby project. Experience fast-paced, skill-based combat where a single precise strike decides victory. This project combines real-time multiplayer gameplay with an emphasis on quick reflexes and tactical positioning.
+Supa Fighta is a one-hit KO fighting game designed as a hobby project. Experience fast-paced, skill-based combat where a single precise strike decides victory is what we would've liked to say if we didn't have the collective IQ of a rock.
 
 ## Visuals
 

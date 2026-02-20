@@ -29,7 +29,7 @@ Download the latest version of Supa Fighta from the [Releases](https://github.co
 
 - **Client**: [Pygame](https://www.pygame.org/) - Python-based game development library
 - **Server**: [Node.js](https://nodejs.org/) - Backend game server implementation
-- **Database**: NoSQL - Data persistence and player management
+- **Database**: [PostgreSQL](https://www.postgresql.org/) - Data persistence and player management
 
 ## Contributing Guidelines
 

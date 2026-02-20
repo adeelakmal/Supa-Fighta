@@ -18,7 +18,7 @@ COPY --from=builder /app/node_modules ./node_modules
 # prefer dist if build produced it, otherwise copy source
 COPY --from=builder /app/src ./src
 
-EXPOSE 3000
+EXPOSE 8080
 USER node
 # use package.json start script (ensure "start" is defined)
 CMD ["npm", "start"]

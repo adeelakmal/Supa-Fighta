@@ -1,28 +1,49 @@
-# Supa-Fighta
+# Supa Fighta
 
-## 📊 Database Tables
+## Project Description
 
-### 🧍‍♂️ players Table
+Supa Fighta is a one-hit KO fighting game designed as a hobby project. Experience fast-paced, skill-based combat where a single precise strike decides victory. This project combines real-time multiplayer gameplay with an emphasis on quick reflexes and tactical positioning.
 
-| Column         | Type        | Description                                 |
-|:----------------|:------------|:---------------------------------------------|
-| player_id      | UUID         | **Primary key, unique player identifier**   |
-| player_name    | VARCHAR(50)  | Player's display name                       |
-| total_wins     | INTEGER      | Number of wins                              |
-| total_losses   | INTEGER      | Number of losses                            |
-| current_streak | INTEGER      | Current win streak count                    |
-| max_streak     | INTEGER      | Max win streak count                        |
-| status         | INTEGER      | (0 for waiting, 1 for in-game) Player Status|
+## Visuals
 
----
+![Supa Fighta Gameplay](./assets/supa-fighta.gif)
 
-### ⚔️ matches Table
+## Getting Started
 
-| Column         | Type                        | Description                               |
-|:----------------|:-----------------------------|:-------------------------------------------|
-| match_id       | INTEGER (PK, AUTO_INCREMENT) | Unique match identifier                   |
-| player1_id     | UUID (FK to players.player_id) | Player 1's identifier                      |
-| player2_id     | UUID (FK to players.player_id) | Player 2's identifier                      |
-| winner_id      | UUID (FK to players.player_id) | Winner's identifier                        |
-| timestamp      | DATETIME                      | When the match started                     |
-| status         | INTEGER                       | (0 for in-game, 1 for ended) Match Status  |
+### Installation
+
+Download the latest version of Supa Fighta from the [Releases](https://github.com/adeelakmal/Supa-Fighta/releases) section of this GitHub page.
+
+## How to Play
+
+### Controls
+
+- **Movement**: Use directional buttons on your keyboard to move your character
+- **Dash**: Press a direction button twice to perform a quick dash
+- **Punch**: Press the **Spacebar** to attack
+- **Parry**: Press the **A** key to parry incoming attacks
+
+*Note: Controller support will be added in a future update.*
+
+## Technologies Used
+
+- **Client**: [Pygame](https://www.pygame.org/) - Python-based game development library
+- **Server**: [Node.js](https://nodejs.org/) - Backend game server implementation
+- **Database**: [PostgreSQL](https://www.postgresql.org/) - Data persistence and player management
+
+## Contributing Guidelines
+
+We're open to contributions! We especially welcome help with:
+- Music composition and audio design
+- Art and visual assets
+- Bug fixes and gameplay improvements
+
+### How to Contribute
+
+- **Report Issues**: Use the [Issues](https://github.com/adeelakmal/Supa-Fighta/issues) section to report bugs or suggest features
+- **Submit Pull Requests**: Feel free to fork the repository and submit pull requests with improvements
+- **Get in Touch**: Reach out to us directly if you'd like to collaborate on specific aspects
+
+## Project Status
+
+🚧 **Work in Progress** - This project is in the early stages of implementation. Expect ongoing updates, new features, and improvements as development continues.

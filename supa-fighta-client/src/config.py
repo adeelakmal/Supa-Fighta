@@ -6,7 +6,7 @@ PLAYER_SIZE = 50
 PLAYER_COLOR = (0, 255, 0)
 PLAYER_WIDTH = 80
 BACKGROUND_COLOR = (255, 255, 255)
-DEBUG = True
+DEBUG = False
 
 # Sprites 
 SPRITES = {
@@ -156,5 +156,5 @@ MUSIC = {
 }
 
 # WebSocket settings
-WS_URL = "ws://localhost:8080"
+WS_URL = "wss://supa-fighta-production.up.railway.app"
 PLAYER_ID = None

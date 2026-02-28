@@ -50,9 +50,8 @@ class LobbyState:
         screen.blit(lobby_state, rect)
 
     def handle_event(self, event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_ESCAPE:
-                self.state_manager.change_state("main_menu")
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.state_manager.change_state("main_menu")
 
     def get_player(self):
         return self.player

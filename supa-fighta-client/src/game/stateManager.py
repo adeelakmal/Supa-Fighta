@@ -62,3 +62,9 @@ class GameState:
     def handle_event(self, event):
         if self.current_state:
             self.current_state.handle_event(event)
+
+    def draw_background(self, screen):
+        self.background.draw(screen)
+
+    def update_background(self):
+        self.background.update()

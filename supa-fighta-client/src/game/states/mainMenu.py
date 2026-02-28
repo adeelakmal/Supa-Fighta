@@ -6,7 +6,6 @@ from sound_loader import SoundLoader
 class MainMenuState:
     def __init__(self, state_manager):
         self.state_manager = state_manager
-        self.title_font = pygame.font.Font(None, 74)
         self.buttons = [
             Button(22, config.WINDOW_HEIGHT - 190, "Join Lobby"),
             Button(22, config.WINDOW_HEIGHT - 150, "Settings"),
@@ -25,10 +24,10 @@ class MainMenuState:
         pass
 
     def update(self):
-        self.state_manager.background.update()
+        self.state_manager.update_background()
 
     def draw(self, screen: pygame.Surface):
-        self.state_manager.background.draw(screen)
+        self.state_manager.draw_background(screen)
         for button in self.buttons:
             button.draw(screen)
 

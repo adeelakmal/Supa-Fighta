@@ -47,16 +47,16 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           tag_name: client-build-${{ github.run_id }}
           release_name: client-build-${{ github.run_id }}
           draft: false
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
         with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: supa-fighta-client/client-build-${{ github.run_id }}.zip
           asset_name: client-build-${{ github.run_id }}.zip

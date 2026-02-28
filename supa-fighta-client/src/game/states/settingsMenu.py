@@ -3,14 +3,14 @@ import config
 from button import Button
 from sound_loader import SoundLoader
 
-class MainMenuState:
+class SettingsState:
     def __init__(self, state_manager):
         self.state_manager = state_manager
         self.title_font = pygame.font.Font(None, 74)
         self.buttons = [
-            Button(22, config.WINDOW_HEIGHT - 190, "Join Lobby"),
-            Button(22, config.WINDOW_HEIGHT - 150, "Settings"),
-            Button(25, config.WINDOW_HEIGHT - 110, "Exit")
+            Button(15, config.WINDOW_HEIGHT - 190, "Player Name", 30),
+            Button(15, config.WINDOW_HEIGHT - 150, "Sound", 30),
+            Button(15, config.WINDOW_HEIGHT - 110, "Back", 30)
         ]
         self.selected_index = 0
         self.using_mouse = False
@@ -18,8 +18,9 @@ class MainMenuState:
         self.sound_loader = SoundLoader.get_instance()
 
     def enter(self):
-        pygame.mixer.music.load(config.MUSIC["menu"])
-        pygame.mixer.music.play(-1, 0, 0)
+        if not pygame.mixer.music.get_busy():
+            pygame.mixer.music.load(config.MUSIC["menu"])
+            pygame.mixer.music.play(-1, 0, 0)
 
     def exit(self):
         pass
@@ -42,7 +43,7 @@ class MainMenuState:
             elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                 self._activate(self.buttons[self.selected_index].text)
             elif event.key == pygame.K_ESCAPE:
-                pygame.event.post(pygame.event.Event(pygame.QUIT))
+                self._go_back()
 
         for i, button in enumerate(self.buttons):
             result = button.handle_event(event)
@@ -67,9 +68,14 @@ class MainMenuState:
 
     def _activate(self, text):
         self.sound_loader.get_sound("button_select").play()
-        if text == "Join Lobby":
-            self.state_manager.change_state("lobby")
-        elif text == "Settings":
-            self.state_manager.change_state("settings")
-        elif text == "Exit":
-            pygame.event.post(pygame.event.Event(pygame.QUIT))
+        if text == "Username Settings":
+            # TODO: Implement username settings
+            pass
+        elif text == "Sound Settings":
+            # TODO: Implement sound settings
+            pass
+        elif text == "Back":
+            self._go_back()
+
+    def _go_back(self):
+        self.state_manager.go_back()

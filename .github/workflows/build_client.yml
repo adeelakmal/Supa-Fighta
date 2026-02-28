@@ -37,3 +37,27 @@ jobs:
         with:
           name: supa-fighta-client-build
           path: supa-fighta-client/dist/
+
+      - name: Package build artifacts
+        run: |
+          # Compress the dist folder into a single zip so it can be uploaded as a release asset
+          Compress-Archive -Path 'supa-fighta-client/dist/*' -DestinationPath 'supa-fighta-client/client-build-${{ github.run_id }}.zip'
+
+      - name: Create GitHub Release
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: client-build-${{ github.run_id }}
+          release_name: client-build-${{ github.run_id }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload release asset
+        uses: actions/upload-release-asset@v1
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: supa-fighta-client/client-build-${{ github.run_id }}.zip
+          asset_name: client-build-${{ github.run_id }}.zip
+          asset_content_type: application/zip

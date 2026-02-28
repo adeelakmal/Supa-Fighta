@@ -6,6 +6,7 @@ from game.player import Player
 from animations.sprites import SpriteSheet
 from animations.animation import Animator
 from type.sprite import SpriteProperties
+from sound_loader import SoundLoader
 
 class LobbyState:
 
@@ -24,6 +25,7 @@ class LobbyState:
         )
         self.player = None
         self.background = Animator(self.background_sprites, 10)
+        self.sound_loader = SoundLoader.get_instance()
 
     def enter(self):
         self.running = True
@@ -51,7 +53,10 @@ class LobbyState:
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.sound_loader.get_sound("button_select").play()
+            self.player.net.close()
             self.state_manager.change_state("main_menu")
+            self.player = None
 
     def get_player(self):
         return self.player

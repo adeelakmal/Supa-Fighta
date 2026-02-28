@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -38,17 +40,40 @@ jobs:
           name: supa-fighta-client-build
           path: supa-fighta-client/dist/
 
+      - name: Determine next semver tag
+        id: calc_tag
+        shell: pwsh
+        run: |
+          # fetch tags (checkout used fetch-depth:0 but ensure tags are present)
+          git fetch --tags
+          # list tags and keep only simple semver tags like 0.0.1
+          $tags = git tag --list
+          $semver = $tags | Where-Object { $_ -match '^[0-9]+\.[0-9]+\.[0-9]+$' }
+          if ($semver -and $semver.Count -gt 0) {
+            # sort by Version and pick the latest
+            $sorted = $semver | Sort-Object { [Version]$_ }
+            $latest = $sorted[-1]
+            $v = [Version]$latest
+            $next = "$($v.Major).$($v.Minor).$([int]$v.Build + 1)"
+          } else {
+            $next = '0.0.1'
+          }
+          Write-Host "Latest tag: $latest"
+          Write-Host "Next tag: $next"
+          # export as step output
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "next_tag=$next"
+
       - name: Package build artifacts
         run: |
           # Compress the dist folder into a single zip so it can be uploaded as a release asset
-          Compress-Archive -Path 'supa-fighta-client/dist/*' -DestinationPath 'supa-fighta-client/client-build-${{ github.run_id }}.zip'
+          Compress-Archive -Path 'supa-fighta-client/dist/*' -DestinationPath 'supa-fighta-client/supa-fighta-client.zip'
 
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: client-build-${{ github.run_id }}
-          release_name: client-build-${{ github.run_id }}
+          tag_name: v${{ steps.calc_tag.outputs.next_tag }}
+          release_name: v${{ steps.calc_tag.outputs.next_tag }}
           draft: false
           prerelease: false
         env:
@@ -58,8 +83,8 @@ jobs:
         uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: supa-fighta-client/client-build-${{ github.run_id }}.zip
-          asset_name: client-build-${{ github.run_id }}.zip
+          asset_path: supa-fighta-client/supa-fighta-client.zip
+          asset_name: supa-fighta-client.zip
           asset_content_type: application/zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

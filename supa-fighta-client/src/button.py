@@ -2,8 +2,8 @@ import pygame
 from sound_loader import SoundLoader
 
 class Button:
-    def __init__(self, x, y, text, font_color=(216, 138, 97)):
-        self.font = pygame.font.Font("assets/RamadhanMubarok.otf", 30)
+    def __init__(self, x, y, text, font_size=30, font_color=(216, 138, 97)):
+        self.font = pygame.font.Font("assets/RamadhanMubarok.otf", font_size)
         self.default_color = font_color
         self.font_color = font_color
         self.rect = pygame.Rect(x, y, 100, 25)
@@ -35,6 +35,6 @@ class Button:
                 return self.text
         return None
 
-    def set_selected(self, selected: bool):
+    def set_highlighted(self, selected: bool):
         self.is_selected = selected
         self.font_color = (244, 186, 98) if selected else self.default_color

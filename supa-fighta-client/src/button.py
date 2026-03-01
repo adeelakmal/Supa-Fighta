@@ -35,6 +35,6 @@ class Button:
                 return self.text
         return None
 
-    def set_selected(self, selected: bool):
+    def set_highlighted(self, selected: bool):
         self.is_selected = selected
         self.font_color = (244, 186, 98) if selected else self.default_color

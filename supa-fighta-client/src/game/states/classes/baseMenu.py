@@ -6,10 +6,10 @@ class BaseMenu:
     def __init__(self, state_manager, buttons):
         self.state_manager = state_manager
         self.buttons = buttons
-        self.selected_button = self.buttons[0] if buttons else None
+        self.selected_button = self.buttons[0] if self.buttons else None
         self.using_mouse = False
         self.sound_loader = SoundLoader.get_instance()
-        self.selected_button.set_selected(True)
+        self.selected_button.set_highlighted(True)
 
     def enter(self):
         if not pygame.mixer.music.get_busy():
@@ -53,9 +53,9 @@ class BaseMenu:
     def _set_selected_button(self, button):
         if button == self.selected_button:
             return
-        self.selected_button.set_selected(False)
+        self.selected_button.set_highlighted(False)
         self.selected_button = button
-        self.selected_button.set_selected(True)
+        self.selected_button.set_highlighted(True)
 
     def _move_selection(self, direction):
         current_index = self.buttons.index(self.selected_button)

@@ -158,3 +158,4 @@ MUSIC = {
 # WebSocket settings
 WS_URL = "wss://supa-fighta-production.up.railway.app"
 PLAYER_ID = None
+PLAYER_NAME = "Guest"

@@ -9,7 +9,9 @@ class BaseMenu:
         self.selected_button = self.buttons[0] if self.buttons else None
         self.using_mouse = False
         self.sound_loader = SoundLoader.get_instance()
-        self.selected_button.set_highlighted(True)
+        # delegate visual/audio selection behavior to Button
+        if self.selected_button:
+            self.selected_button.set_selected(True)
 
     def enter(self):
         if not pygame.mixer.music.get_busy():
@@ -37,7 +39,6 @@ class BaseMenu:
             elif event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
                 self._activate(self.selected_button.text)
             elif event.key == pygame.K_ESCAPE:
-                self.sound_loader.get_sound("button_select").play()
                 self._on_escape()
 
         # Handle mouse events for buttons
@@ -53,18 +54,30 @@ class BaseMenu:
     def _set_selected_button(self, button):
         if button == self.selected_button:
             return
-        self.selected_button.set_highlighted(False)
+        self.selected_button.set_selected(False)
         self.selected_button = button
-        self.selected_button.set_highlighted(True)
+        self.selected_button.set_selected(True)
 
     def _move_selection(self, direction):
         current_index = self.buttons.index(self.selected_button)
         new_index = (current_index + direction) % len(self.buttons)
         self._set_selected_button(self.buttons[new_index])
-        self.sound_loader.get_sound("button_hover").play()
 
     def _activate(self, text):
-        self.sound_loader.get_sound("button_select").play()
+        """
+        Delegate activation feedback to the Button instance. Find the
+        button matching the provided text and call its activate() so the
+        Button class controls the sound/visuals.
+        """
+        try:
+            matching = next((b for b in self.buttons if b.text == text), None)
+            if matching:
+                matching.activate()
+            elif self.selected_button:
+                # fallback to currently selected button
+                self.selected_button.activate()
+        except Exception:
+            pass
 
     def _on_escape(self):
         pass

@@ -35,6 +35,27 @@ class Button:
                 return self.text
         return None
 
-    def set_highlighted(self, selected: bool):
+    def set_selected(self, selected: bool):
+        # no-op if state doesn't change
+        if self.is_selected == selected:
+            return
         self.is_selected = selected
         self.font_color = (244, 186, 98) if selected else self.default_color
+        if selected:
+            try:
+                self.sound_loader.get_sound("button_hover").play()
+            except Exception:
+                # don't crash on missing sound
+                pass
+
+    # backward compatible alias
+    def set_highlighted(self, selected: bool):
+        self.set_selected(selected)
+
+    def activate(self):
+     
+        try:
+            self.sound_loader.get_sound("button_select").play()
+        except Exception:
+            pass
+        return self.text

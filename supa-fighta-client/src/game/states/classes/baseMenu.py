@@ -14,9 +14,10 @@ class BaseMenu:
             self.selected_button.set_selected(True)
 
     def enter(self):
-        if not pygame.mixer.music.get_busy():
-            pygame.mixer.music.load(config.MUSIC["menu"])
-            pygame.mixer.music.play(-1, 0, 0)
+        # if not pygame.mixer.music.get_busy():
+        #     pygame.mixer.music.load(config.MUSIC["menu"])
+        #     pygame.mixer.music.play(-1, 0, 0)
+        pass
 
     def exit(self):
         self._set_selected_button(self.buttons[0])

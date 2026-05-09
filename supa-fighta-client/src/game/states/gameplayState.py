@@ -36,8 +36,8 @@ class GameplayState:
         self.winner = None
 
     def enter(self):        
-        pygame.mixer.music.load(config.MUSIC["fight"])
-        pygame.mixer.music.play(-1,0,0)
+        # pygame.mixer.music.load(config.MUSIC["fight"])
+        # pygame.mixer.music.play(-1,0,0)
         self.opponent.walk_into_frame()
         self.running = True
 

@@ -32,6 +32,7 @@ class LobbyState:
         if self.player is None:
             self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
         else:
+            self.player.player_reset()
             self.send_player_rejoined()
 
     def exit(self):

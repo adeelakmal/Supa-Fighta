@@ -33,6 +33,10 @@ class GameState:
     def change_state(self, new_state: str):
         if config.DEBUG:
             print(f"Changed state to: {new_state}")
+        if self.state_stack:
+            current_state = self.state_stack[-1]
+            if hasattr(current_state, 'exit'):
+                current_state.exit()
         if new_state == "gameplay":
             lobby_state = self.states["lobby"]
             self.states["gameplay"] = GameplayState(lobby_state.get_player(), self)

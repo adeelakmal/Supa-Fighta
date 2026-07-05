@@ -9,6 +9,8 @@ import config
 import pygame
 import time
 
+SNAPSHOT_INTERVAL = 1 / 30
+
 class GameplayState:
     def __init__(self, player: Player, state_manager):
         self.running = True
@@ -109,7 +111,7 @@ class GameplayState:
             self.player.set_state('win')
         
         self._current_time = time.time()
-        if self._current_time - self._last_snapshot_time >= 0.1:
+        if self._current_time - self._last_snapshot_time >= SNAPSHOT_INTERVAL:
             snapshot = self._create_state_snapshot()
             self.player.net.send_snapshot(snapshot)
             self._cleanup()

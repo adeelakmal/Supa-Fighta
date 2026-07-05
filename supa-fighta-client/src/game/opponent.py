@@ -4,6 +4,7 @@ from loader import AssetLoader
 
 ACTIONABLE_STATES = ['dash', 'punch', 'parry', 'parry-hit', 'parried']
 END_STATES = ['hurt', 'win']
+RECOVERY_STATES = ['parry-hit', 'parried']
 DASH_FACTOR = 2.5
 
 class Opponent:
@@ -17,6 +18,8 @@ class Opponent:
         # self.net = net
         self.walking_in = True
         self.parry_hit_registered = False
+        self.attack_resolved = False
+        self.queued_state = None
         self.hurt_x=None
         self.hurt_done=False
         # Simple smooth-move state for reset_position
@@ -32,6 +35,9 @@ class Opponent:
 
         if self.opponent_state in END_STATES:
             return
+        
+        if self.opponent_state in RECOVERY_STATES and event not in RECOVERY_STATES:
+            return
 
         match event:
             case "idle":
@@ -42,6 +48,7 @@ class Opponent:
             case "punch":
                 if self.opponent_state != 'punch':
                     self.opponent_state = "punch"
+                    self.attack_resolved = False
                     self.opponent_assets.get_animation('punch').reset()
             
             case "parry":
@@ -55,9 +62,12 @@ class Opponent:
                     self.opponent_assets.get_animation('parry-hit').reset()
 
             case "parried":
-                if self.opponent_state != "parried":
-                    self.opponent_state = "parried"
-                    self.opponent_assets.get_animation('parried').reset()
+                if self.opponent_state == "punch":
+                    self.queue_state_after_current("parried")
+                elif self.opponent_state != "parried":
+                    self.enter_state("punch")
+                    self.attack_resolved = True
+                    self.queue_state_after_current("parried")
             case "walk_left":
                 self.opponent_state = 'walk'
                 self.velocity = -self.speed
@@ -141,11 +151,13 @@ class Opponent:
 
             if self.opponent_state in ACTIONABLE_STATES:
                 if self.opponent_assets.get_animation(self.opponent_state).is_finished():
-                    if self.parry_hit_registered and self.opponent_state == 'parry':
-                        self.opponent_state = 'parry-hit'
-                        self.parry_hit_registered = False
+                    if self.queued_state:
+                        next_state = self.queued_state
+                        self.queued_state = None
+                        self.enter_state(next_state)
                     else:
                         self.opponent_state = 'idle'
+                    self.parry_hit_registered = False
             elif self.opponent_state in END_STATES:
                 if self.opponent_state == 'hurt' and self.hurt_x is not None:
                     if self.opponent_x < self.hurt_x + 8:
@@ -174,6 +186,8 @@ class Opponent:
         return hurtbox
 
     def get_hitbox(self) -> pygame.Rect:
+        if self.opponent_state == 'punch' and self.attack_resolved:
+            return None
         asset_hitbox = self.opponent_assets.get_hitbox(self.opponent_state)
         if not asset_hitbox:
             return None
@@ -188,6 +202,18 @@ class Opponent:
     def set_state(self, state: str):
         self.opponent_state = state
     
+    def enter_state(self, state: str):
+        self.opponent_state = state
+        if state == 'punch':
+            self.attack_resolved = False
+            self.queued_state = None
+        animation = self.opponent_assets.get_animation(state)
+        if animation:
+            animation.reset()
+    
+    def queue_state_after_current(self, state: str):
+        self.queued_state = state
+    
     def set_hurt(self, x_pos: int):
         self.hurt_x = x_pos
     
@@ -199,3 +225,6 @@ class Opponent:
         self.hurt_done = False
         self.walking_in = True
         self.opponent_state = 'idle'
+        self.attack_resolved = False
+        self.parry_hit_registered = False
+        self.queued_state = None

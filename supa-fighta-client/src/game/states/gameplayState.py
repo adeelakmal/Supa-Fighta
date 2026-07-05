@@ -92,6 +92,8 @@ class GameplayState:
         if last_opponent_update and not self.opponent.walking_in and not self.game_over:
             opp_state = last_opponent_update.get("current_state", "idle")
             opp_position = last_opponent_update.get("position").get("x", self.opponent.opponent_x)
+            if opp_state == "parried" and self.player.player_state == "parry":
+                self.player.enter_state("parry-hit")
             self.opponent.reset_position(opp_position, opp_state) #using player speed to judge if the opponent is being pushed
         last_player_correction = self.player.net.get_last_player_correction()
         if last_player_correction and not self.game_over:

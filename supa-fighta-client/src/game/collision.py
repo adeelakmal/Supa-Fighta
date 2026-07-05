@@ -3,6 +3,7 @@ from game.opponent import Opponent
 import pygame
 
 DEBUG = True
+ACTIVE_PARRY_STATE = 'parry'
 
 class Collision:
     def check_overlap(player: Player, opponent: Opponent) -> bool:
@@ -19,29 +20,33 @@ class Collision:
         opponent_hitbox = opponent.get_hitbox()
        
         if player_hitbox and player_hitbox.colliderect(opponent_hurtbox):
-            if DEBUG and opponent.opponent_state!="parry":
-                print(f"Player Wins! Player Hitbox: {player_hitbox}, Opponent Hurtbox: {opponent_hurtbox}")
-            if opponent.opponent_state!="parry" and opponent.opponent_state!="parry-hit":
-                opponent.set_state('hurt')
-                opponent.set_hurt(opponent.opponent_x)
-                return True
-            else:
+            player.attack_resolved = True
+            if opponent.opponent_state == ACTIVE_PARRY_STATE:
                 if DEBUG:
                     print("Opponent parried the attack!")
-                opponent.parry_hit_registered = True
-                player.recovery_until+=300
-        elif opponent_hitbox and opponent_hitbox.colliderect(player_hurtbox):
-            if DEBUG and player.player_state!="parry":
-                print(f"Opponent Wins! Opponent Hitbox: {opponent_hitbox}, Player Hurtbox: {player_hurtbox}")
-            if player.player_state!="parry" and player.player_state!="parry-hit":
-                player.set_state('hurt')
-                player.set_hurt(player.player_x)
-                return True
+                opponent.enter_state('parry-hit')
+                player.queue_state_after_current('parried')
+                player.recovery_until = pygame.time.get_ticks() + 300
             else:
                 if DEBUG:
+                    print(f"Player Wins! Player Hitbox: {player_hitbox}, Opponent Hurtbox: {opponent_hurtbox}")
+                opponent.enter_state('hurt')
+                opponent.set_hurt(opponent.opponent_x)
+                return True
+        elif opponent_hitbox and opponent_hitbox.colliderect(player_hurtbox):
+            opponent.attack_resolved = True
+            if player.player_state == ACTIVE_PARRY_STATE:
+                if DEBUG:
                     print("Player parried the attack!")
-                player.parry_hit_registered = True
-                opponent.recovery_until+=300
+                player.enter_state('parry-hit')
+                opponent.queue_state_after_current('parried')
+                opponent.recovery_until = pygame.time.get_ticks() + 300
+            else:
+                if DEBUG:
+                    print(f"Opponent Wins! Opponent Hitbox: {opponent_hitbox}, Player Hurtbox: {player_hurtbox}")
+                player.enter_state('hurt')
+                player.set_hurt(player.player_x)
+                return True
         return False
     def debug_draw(surface: pygame.Surface, player: Player, opponent: Opponent):
         player_hurtbox = player.get_hurtbox()

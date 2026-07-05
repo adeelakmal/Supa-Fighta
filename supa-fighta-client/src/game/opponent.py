@@ -117,15 +117,16 @@ class Opponent:
                 sprite_width = 80
                 if self.moving_to_target and self.target_x is not None:
                     dist = self.target_x - self.opponent_x
+                    move_speed = self.speed * DASH_FACTOR if self.opponent_state == 'dash' else self.speed
                     # If within one step, snap to the target and stop to avoid overshoot/jitter
-                    if abs(dist) <= self.speed:
+                    if abs(dist) <= move_speed:
                         self.opponent_x = self.target_x
                         self.moving_to_target = False
                         self.target_x = None
                         # clear velocity so we don't immediately move again
                         self.velocity = 0
                     else:
-                        step = self.speed if dist > 0 else -self.speed
+                        step = move_speed if dist > 0 else -move_speed
                         new_x = self.opponent_x + step
                         new_x = max(sprite_width, min(config.WINDOW_WIDTH - sprite_width, new_x))
                         self.opponent_x = new_x

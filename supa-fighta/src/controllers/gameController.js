@@ -31,6 +31,11 @@ class Game {
         this.losser = null;
         this.interval = null;
         this.moveStep = 2;
+        this.parryLocks = new Set();
+        this.attackResolved = {
+            [player1.id]: false,
+            [player2.id]: false
+        };
 
     }
 
@@ -59,13 +64,20 @@ class Game {
         let otherPos = this.positions[otherId];
         let reversedOtherPos = this.reversePosition(otherPos);
         let player = this.player1.id === playerId ? this.player1 : this.player2;
+        const parryLockKey = `${playerId}:${otherId}`;
         // console.log(`Reversed opponent position for processing:`, otherPos);
+
+        if (input !== 'punch') {
+            this.parryLocks.delete(parryLockKey);
+            this.attackResolved[playerId] = false;
+        }
 
         switch (input) {
             case 'idle':
-                player.state = Inputs.IDEL
+                player.state = 'idle'
                 break;
             case 'walk_left':
+                player.state = input;
                 if ( pos.x - this.moveStep > 0 ) {
                     pos.x -= this.moveStep;
                 }
@@ -74,6 +86,7 @@ class Game {
                 }
                 break;
             case 'walk_right':
+                player.state = input;
                 if ( pos.x + this.moveStep <= reversedOtherPos.x - 80 ) {
                     pos.x += this.moveStep;
                 }
@@ -92,6 +105,7 @@ class Game {
                 }
                 break;
             case 'dash_left':
+                player.state = input;
                 if ( pos.x - this.moveStep > 0 ) {
                     pos.x -= this.moveStep * (DASH_FACTOR - 0.5);
                 }
@@ -100,6 +114,7 @@ class Game {
                 }
                 break;
             case 'dash_right':
+                player.state = input;
                 if (pos.x + (this.moveStep * DASH_FACTOR) <= reversedOtherPos.x - 80 ) {
                     pos.x += this.moveStep * DASH_FACTOR;
                 }
@@ -116,10 +131,20 @@ class Game {
                 }
                 break;
             case 'punch':
+                if (this.attackResolved[playerId]) {
+                    break;
+                }
+                player.state = 'punch';
                 if(pos.x+80+30 > reversedOtherPos.x) {
+                    this.attackResolved[playerId] = true;
                     let otherPlayer = this.player1.id === otherId ? this.player1 : this.player2;
                     if (otherPlayer.state == Inputs.PARRY){
-                        console.log(`Player ${otherId} parried Player ${playerId}`);
+                        if (!this.parryLocks.has(parryLockKey)) {
+                            console.log(`Player ${otherId} parried Player ${playerId}`);
+                            this.parryLocks.add(parryLockKey);
+                        }
+                        player.state = 'parried';
+                        otherPlayer.state = 'parry-hit';
                     } else {
                         console.log(`Player ${playerId} punched Player ${otherId}`);
                         this.winner = this.player1.id === playerId ? this.player1 : this.player2;
@@ -130,6 +155,10 @@ class Game {
                 break;
             case 'parry':
                 player.state = Inputs.PARRY
+                break;
+            case 'parry-hit':
+            case 'parried':
+                player.state = input;
                 break;
             default:
                 // console.log("Unknown input:", input);
@@ -191,7 +220,8 @@ class Game {
 
         // send response to opponent
         let pos = this.reversePosition(serverPos);
-        let op_state = this.reverseState(history[history.length - 1]);
+        let player = this.player1.id === playerId ? this.player1 : this.player2;
+        let op_state = this.reverseState(player.state || history[history.length - 1]);
         let message = {
             type: 'opponent_update',
             position: pos,

@@ -13,10 +13,10 @@ class GameManager {
 
     routeInput(lobby, playerId, snapshot) {
         const player = lobby.players.find(p =>  p.id === playerId);
-        if (player.matchId === null) return;
+        if (!player || player.match_id === null) return;
 
         const game = this.activeGames.find(g => g.matchId === player.match_id);
-        if (game.status === 1) return; // Game has ended, ignore inputs
+        if (!game || game.status === 1) return; // Game has ended, ignore inputs
         if (game) {
             game.validateState(playerId, snapshot);
         }

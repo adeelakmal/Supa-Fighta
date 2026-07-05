@@ -20,6 +20,8 @@ class Player:
         self.speed = 2
         self.player_state ='wait'
         self.parry_hit_registered = False
+        self.attack_resolved = False
+        self.queued_state = None
         self.velocity = 0
         self.hurt_x=None
         self.hurt_done=False
@@ -38,6 +40,7 @@ class Player:
         if keys[pygame.K_SPACE]:
             if self.player_state != 'punch':
                 self.player_state = 'punch'
+                self.attack_resolved = False
                 # TODO: Use Player State to Fetch Assets
                 self.player_assets.get_animation('punch').reset()
                 self.recovery_until = now + config.RECOVERY_DURATIONS.get('punch', 0)
@@ -81,11 +84,13 @@ class Player:
 
         if self.player_state in ACTIONABLE_STATES:
                 if self.player_assets.get_animation(self.player_state).is_finished():
-                    if self.parry_hit_registered and self.player_state == 'parry':
-                        self.player_state = 'parry-hit'
-                        self.parry_hit_registered = False
+                    if self.queued_state:
+                        next_state = self.queued_state
+                        self.queued_state = None
+                        self.enter_state(next_state)
                     else:
                         self.player_state = 'idle'
+                    self.parry_hit_registered = False
         elif self.player_state in END_STATES:   
             if self.player_state == 'hurt' and self.hurt_x is not None:
                 if self.player_x > self.hurt_x - 8:
@@ -124,6 +129,8 @@ class Player:
         return hurtbox
 
     def get_hitbox(self) -> pygame.Rect:
+        if self.player_state == 'punch' and self.attack_resolved:
+            return None
         asset_hitbox = self.player_assets.get_hitbox(self.player_state)
         if not asset_hitbox:
             return None
@@ -141,6 +148,18 @@ class Player:
     
     def set_state(self, state: str):
         self.player_state = state
+    
+    def enter_state(self, state: str):
+        self.player_state = state
+        if state == 'punch':
+            self.attack_resolved = False
+            self.queued_state = None
+        animation = self.player_assets.get_animation(state)
+        if animation:
+            animation.reset()
+    
+    def queue_state_after_current(self, state: str):
+        self.queued_state = state
 
     def set_hurt(self, x_pos: int):
         self.hurt_x = x_pos
@@ -156,5 +175,8 @@ class Player:
         self.last_tap_time = {pygame.K_LEFT: 0, pygame.K_RIGHT: 0}
         self._inputs = []
         self.recovery_until = 0
+        self.attack_resolved = False
+        self.parry_hit_registered = False
+        self.queued_state = None
         self.player_assets.get_animation('win').reset()
         self.player_assets.get_animation('hurt').reset()

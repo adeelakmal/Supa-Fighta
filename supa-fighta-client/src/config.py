@@ -151,7 +151,7 @@ SOUND = {
 
 # BACKGROUND MUSIC
 MUSIC = {
-    "menu" : "assets/menu_music.wav",
+    "menu" : "assets/menu_music.wav", 
     "fight" : "assets/fight_music.wav"
 }
 

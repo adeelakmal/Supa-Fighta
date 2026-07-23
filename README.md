@@ -10,9 +10,48 @@ Supa Fighta is a one-hit KO fighting game designed as a hobby project. Experienc
 
 ## Getting Started
 
-### Installation
+### Download
 
-Download the latest version of Supa Fighta from the [Releases](https://github.com/adeelakmal/Supa-Fighta/releases) section of this GitHub page.
+Download `supa-fighta-client.zip` from the latest [release](https://github.com/adeelakmal/Supa-Fighta/releases), extract it, and run `main.exe`.
+
+Keep `main.exe` and the `assets` folder together. Prebuilt releases currently support Windows only.
+
+### Run Locally
+
+Requires Python 3.12.
+
+```bash
+cd supa-fighta-client
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+python src/main.py
+```
+
+Run the client from `supa-fighta-client` so it can find its assets. The client connects to the hosted game server by default.
+
+#### Ubuntu
+
+Install Tkinter if it is not included with Python:
+
+```bash
+sudo apt install python3-tk
+```
+
+#### WSL
+
+Install PulseAudio support and use the WSLg audio server:
+
+```bash
+sudo apt install libpulse0
+SDL_AUDIODRIVER=pulseaudio python src/main.py
+```
+
+To run without audio:
+
+```bash
+SDL_AUDIODRIVER=dummy python src/main.py
+```
 
 ## How to Play
 

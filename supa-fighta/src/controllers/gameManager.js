@@ -13,7 +13,7 @@ class GameManager {
             () => this.destroyGame(matchId)
         );
         this.activeGames.push(game)
-        return game.start();
+        return game.start() ? game : null;
     }
 
     routeInput(lobby, playerId, snapshot) {
@@ -43,6 +43,7 @@ class GameManager {
         const gameIndex = this.activeGames.findIndex(game => game.matchId === matchId);
         if (gameIndex === -1) return;
 
+        clearTimeout(this.activeGames[gameIndex].countdownTimeout);
         clearInterval(this.activeGames[gameIndex].interval);
         this.activeGames.splice(gameIndex, 1);
     }

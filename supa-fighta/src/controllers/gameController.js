@@ -5,6 +5,7 @@ const { Inputs } = require('../enums');
 const WebSocket = require('ws');
 const DASH_FACTOR = 2.5
 const MATCH_DURATION_SECONDS = 20;
+const INTRO_COUNTDOWN_SECONDS = 3;
 
 class Game {
     constructor(matchId, player1, player2, onEnd = null) {
@@ -32,6 +33,10 @@ class Game {
         this.winner = null;
         this.losser = null;
         this.interval = null;
+        this.countdownTimeout = null;
+        this.countdownSeconds = INTRO_COUNTDOWN_SECONDS;
+        this.startsAt = null;
+        this.acceptingInput = false;
         this.onEnd = onEnd;
         this.moveStep = 2;
         this.parryLocks = new Set();
@@ -44,13 +49,19 @@ class Game {
 
     start() {
         console.log(`Starting match ${this.matchId} between ${this.player1.id} and ${this.player2.id}`);
+        this.startsAt = Date.now() + (this.countdownSeconds * 1000);
+        const startMessage = {
+            type: 'game_start',
+            countdownSeconds: this.countdownSeconds,
+            startsAt: this.startsAt
+        };
         const player1Ready = this.sendToPlayer(
             this.player1,
-            { type: 'game_start', opponent: this.player2.id }
+            { ...startMessage, opponent: this.player2.id }
         );
         const player2Ready = this.sendToPlayer(
             this.player2,
-            { type: 'game_start', opponent: this.player1.id }
+            { ...startMessage, opponent: this.player1.id }
         );
 
         if (!player1Ready || !player2Ready) {
@@ -68,7 +79,14 @@ class Game {
             return false;
         }
 
-        this.interval = setInterval(() => this.tick(), 1000 / 60);
+        const countdownDelay = Math.max(0, this.startsAt - Date.now());
+        this.countdownTimeout = setTimeout(() => {
+            if (this.status === 1) return;
+
+            this.acceptingInput = true;
+            this.interval = setInterval(() => this.tick(), 1000 / 60);
+        }, countdownDelay);
+
         return true;
     }
 
@@ -233,6 +251,8 @@ class Game {
     }
 
     validateState(playerId, snapshot) {
+        if (!this.acceptingInput || this.status === 1) return;
+
         const player_state  = snapshot.player;
         const { history, state} = player_state;
         let x = player_state.x;
@@ -271,8 +291,10 @@ class Game {
     async end(winner, losser, reason = 'completed') {
         if (this.status === 1) return;
 
+        clearTimeout(this.countdownTimeout);
         clearInterval(this.interval);
         this.status = 1;
+        this.acceptingInput = false;
 
         // Update players' stats
         if (winner) {

@@ -133,14 +133,17 @@ const MatchmakePlayers = async () => {
 
         console.log(`Match created: ${match_id}`);
 
-        const gameStarted = gameManager.createGame(match_id, player1, player2);
-        if (!gameStarted) return;
+        const game = gameManager.createGame(match_id, player1, player2);
+        if (!game) return;
 
         broadcastToLobby(LOBBY, {
             type: 'match_created',
             matchId: match_id,
             player1: player1.id,
             player2: player2.id,
+            countdownSeconds: game.countdownSeconds,
+            startsAt: game.startsAt,
+            serverTime: Date.now()
         });
     } catch (error) {
         console.error("Error during matchmaking:", error);

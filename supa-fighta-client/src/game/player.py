@@ -172,6 +172,7 @@ class Player:
         self.hurt_done = False
         self.player_state = 'wait'
         self.player_x = (config.WINDOW_WIDTH // 2) - 120
+        self.velocity = 0
         self.last_tap_time = {pygame.K_LEFT: 0, pygame.K_RIGHT: 0}
         self._inputs = []
         self.recovery_until = 0

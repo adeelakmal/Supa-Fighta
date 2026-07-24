@@ -24,6 +24,7 @@ class LobbyState:
             )
         )
         self.player = None
+        self.match_countdown_seconds = 3.0
         self.background = Animator(self.background_sprites, 10)
         self.sound_loader = SoundLoader.get_instance()
 
@@ -61,9 +62,25 @@ class LobbyState:
 
     def get_player(self):
         return self.player
+
+    def get_match_countdown_seconds(self):
+        return self.match_countdown_seconds
     
     def check_for_match(self, server_message: Dict):
         if 'match_created' in server_message.get('type') and (server_message.get('player1', None) == config.PLAYER_ID or server_message.get('player2', None) == config.PLAYER_ID):
+                starts_at = server_message.get('startsAt')
+                server_time = server_message.get('serverTime')
+
+                if isinstance(starts_at, (int, float)) and isinstance(server_time, (int, float)):
+                    remaining_ms = max(0, starts_at - server_time)
+                    self.match_countdown_seconds = min(10.0, remaining_ms / 1000)
+                else:
+                    countdown = server_message.get('countdownSeconds', 3)
+                    try:
+                        self.match_countdown_seconds = min(10.0, max(0.0, float(countdown)))
+                    except (TypeError, ValueError):
+                        self.match_countdown_seconds = 3.0
+
                 self.state_manager.change_state("gameplay")
 
     def send_player_rejoined(self):

@@ -57,9 +57,10 @@ class LobbyState:
             return
 
         self.player.waiting_animation()
-        server_message = self.player.net.get_last_response()
-        if server_message:
-            self.check_for_match(server_message)
+        # The network keeps this safe until the lobby reads it here.
+        match_message = self.player.net.get_match_created_message()
+        if match_message:
+            self.check_for_match(match_message)
 
     def draw(self, screen):
         self.background.draw(screen)

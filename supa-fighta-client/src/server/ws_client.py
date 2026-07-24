@@ -27,6 +27,8 @@ class WSClient:
         self._response = None
         self.last_opponent_update = None
         self.last_player_correction = None
+        self._match_created_message = None
+        self._match_created_lock = threading.Lock()
         self._game_end_message = None
         self._game_end_lock = threading.Lock()
         self._response_event = threading.Event()
@@ -63,6 +65,13 @@ class WSClient:
         with self._game_end_lock:
             message = self._game_end_message
             self._game_end_message = None
+            return message
+
+    def get_match_created_message(self):
+        """Return the match message once, after the lobby is ready for it."""
+        with self._match_created_lock:
+            message = self._match_created_message
+            self._match_created_message = None
             return message
 
     def get_connection_error(self):
@@ -109,6 +118,11 @@ class WSClient:
         self._response_event.set()
 
         message_type = data.get('type')
+        if message_type == 'match_created':
+            # Keep this safe so a normal update cannot replace it.
+            with self._match_created_lock:
+                self._match_created_message = data
+
         if message_type == 'game_end':
             with self._game_end_lock:
                 self._game_end_message = data

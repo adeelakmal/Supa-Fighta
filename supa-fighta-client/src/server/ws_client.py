@@ -3,6 +3,7 @@ import websocket
 import json
 import asyncio
 import time
+import math
 import config
 from player_manager import save_player_id
 
@@ -162,6 +163,19 @@ class WSClient:
                 pass
             return
 
+    def _validated_position(self, value, label, maximum):
+        is_number = isinstance(value, (int, float)) and not isinstance(value, bool)
+        if (
+            not is_number
+            or not math.isfinite(value)
+            or not 0 <= value <= maximum
+        ):
+            # One bad position should not stop the whole match.
+            print(f"Ignored invalid {label}: {value!r}")
+            return None
+
+        return float(value)
+
     def _handle_server_message(self, data):
         self._record_server_activity()
         self._response = data
@@ -199,11 +213,30 @@ class WSClient:
                 config.PLAYER_ID = player_id
 
         if message_type == 'opponent_update':
-            self.last_opponent_update = data
+            position = data.get('position')
+            x_position = position.get('x') if isinstance(position, dict) else None
+            x_position = self._validated_position(
+                x_position,
+                "opponent position",
+                config.WINDOW_WIDTH - config.PLAYER_WIDTH
+            )
+            if x_position is not None:
+                safe_position = dict(position)
+                safe_position['x'] = x_position
+                self.last_opponent_update = {
+                    **data,
+                    'position': safe_position
+                }
 
         if message_type == 'correction':
-            self.last_player_correction = float(data.get('position'))
-            print(f"Received position correction from server: {self.last_player_correction}")
+            correction = self._validated_position(
+                data.get('position'),
+                "player correction",
+                config.WINDOW_WIDTH - (config.PLAYER_WIDTH * 2)
+            )
+            if correction is not None:
+                self.last_player_correction = correction
+                print(f"Received position correction from server: {correction}")
 
         return True
 

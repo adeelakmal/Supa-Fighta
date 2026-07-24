@@ -21,6 +21,8 @@ class WSClient:
         self._response = None
         self.last_opponent_update = None
         self.last_player_correction = None
+        self._game_end_message = None
+        self._game_end_lock = threading.Lock()
         self._response_event = threading.Event()
         self._recv_thread = threading.Thread(target=self._start_async_recv_loop, daemon=True)
         self._recv_thread.start()
@@ -46,6 +48,13 @@ class WSClient:
 
     def get_last_response(self):
         return self._response
+
+    def get_game_end_message(self):
+        """Return a game-end message once without letting snapshots erase it."""
+        with self._game_end_lock:
+            message = self._game_end_message
+            self._game_end_message = None
+            return message
     
     def get_last_opponent_update(self):
         update = self.last_opponent_update
@@ -79,6 +88,9 @@ class WSClient:
                     data = json.loads(msg)
                     self._response = data
                     self._response_event.set()
+                    if data.get('type') == 'game_end':
+                        with self._game_end_lock:
+                            self._game_end_message = data
                     if data.get('type') == 'error':
                         print(f"❌ Server error: {data.get('message')}")
                         error_message = data.get('message')

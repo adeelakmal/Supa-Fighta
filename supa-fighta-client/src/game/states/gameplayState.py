@@ -12,6 +12,7 @@ import time
 
 SNAPSHOT_INTERVAL = 1 / 30
 FIGHT_MESSAGE_SECONDS = 0.7
+GAME_OVER_SECONDS = 5
 
 class GameplayState:
     def __init__(self, player: Player, state_manager, countdown_seconds: float = 3.0):
@@ -65,32 +66,21 @@ class GameplayState:
         if countdown_active:
             self.player.velocity = 0
 
-        if self.winner==self.player:
-            if self.winner.player_assets.get_animation(self.winner.player_state).is_finished():
-                self.winner.set_state('win')
-        if self.winner==self.opponent:
-            if self.winner.opponent_assets.get_animation(self.winner.opponent_state).is_finished():
-                self.winner.set_state('win')
-
         if self.player.player_state == 'wait':
             self.player.player_state = 'idle'
-        server_message = self.player.net.get_last_response()
-        if server_message and server_message.get('type') == 'game_end':
-            self.game_over = True
-            self._game_end_time = time.time()
-            self.countdown_end_time = None
-            self.fight_message_end_time = None
-            if server_message.get('winner') is not None:
-                if server_message.get('winner') == config.PLAYER_ID:
-                    self.final_message = "You Win!"
-                    self.winner = self.player
-                else:
-                    self.final_message = "You lose!"
-                    self.winner = self.opponent
-            else:
-                self.final_message = "Match ended in a draw."
-                self.player.set_state('idle')
-                self.opponent.set_state('idle')
+        server_message = self.player.net.get_game_end_message()
+        if server_message and not self.game_over:
+            self._handle_game_end(server_message)
+
+        if self.game_over:
+            self.opponent.update(True)
+            self.player.update(False, True)
+            if (
+                self._game_end_time is not None
+                and time.monotonic() - self._game_end_time >= GAME_OVER_SECONDS
+            ):
+                self.state_manager.change_state("lobby")
+            return
 
         if Collision.check_overlap(self.player, self.opponent):
             if self.player.player_state!="idle":
@@ -137,14 +127,68 @@ class GameplayState:
             self.player.net.send_snapshot(snapshot)
             self._cleanup()
         
-        if self.game_over and self._game_end_time is not None:
-            if time.time() - self._game_end_time >= 5:
-                self.state_manager.change_state("lobby")
+    def _handle_game_end(self, server_message):
+        self.game_over = True
+        self._game_end_time = time.monotonic()
+        self.countdown_end_time = None
+        self.fight_message_end_time = None
+        self.player.velocity = 0
+        self.opponent.velocity = 0
+
+        winner_id = server_message.get('winner')
+        if winner_id is None:
+            self.final_message = "DRAW"
+            self.winner = None
+            self.player.enter_state('idle')
+            self.opponent.enter_state('idle')
+        elif winner_id == config.PLAYER_ID:
+            self.final_message = "YOU WIN!"
+            self.winner = self.player
+            self.player.enter_state('win')
+            self.opponent.enter_state('hurt')
+        else:
+            self.final_message = "YOU LOSE!"
+            self.winner = self.opponent
+            self.player.enter_state('hurt')
+            self.opponent.enter_state('win')
     
     def draw_game_over(self, surface):
-        font = pygame.font.SysFont(None, 74)
-        text = font.render(self.final_message, True, (255, 0, 0))
-        surface.blit(text, (config.WINDOW_WIDTH // 2 - text.get_width() // 2, config.WINDOW_HEIGHT // 4))
+        overlay = pygame.Surface(
+            (config.WINDOW_WIDTH, config.WINDOW_HEIGHT),
+            pygame.SRCALPHA
+        )
+        overlay.fill((0, 0, 0, 150))
+        surface.blit(overlay, (0, 0))
+
+        if self.final_message == "YOU WIN!":
+            message_color = (80, 230, 120)
+        elif self.final_message == "YOU LOSE!":
+            message_color = (245, 80, 80)
+        else:
+            message_color = (255, 214, 64)
+
+        message_font = pygame.font.SysFont(None, 74, bold=True)
+        message = message_font.render(self.final_message, True, message_color)
+        message_rect = message.get_rect(
+            center=(config.WINDOW_WIDTH // 2, config.WINDOW_HEIGHT // 3)
+        )
+        surface.blit(message, message_rect)
+
+        seconds_left = GAME_OVER_SECONDS
+        if self._game_end_time is not None:
+            elapsed = time.monotonic() - self._game_end_time
+            seconds_left = max(0, math.ceil(GAME_OVER_SECONDS - elapsed))
+
+        countdown_font = pygame.font.SysFont(None, 30)
+        countdown = countdown_font.render(
+            f"Returning to lobby in {seconds_left}...",
+            True,
+            (245, 245, 245)
+        )
+        countdown_rect = countdown.get_rect(
+            center=(config.WINDOW_WIDTH // 2, config.WINDOW_HEIGHT // 2)
+        )
+        surface.blit(countdown, countdown_rect)
 
     def is_countdown_active(self):
         return (

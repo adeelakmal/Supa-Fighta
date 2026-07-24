@@ -158,5 +158,7 @@ MUSIC = {
 # WebSocket settings
 WS_URL = "wss://supa-fighta-production.up.railway.app"
 # WS_URL = "ws://localhost:8080"
+WS_CONNECT_TIMEOUT = 5
 PLAYER_ID = None
+PLAYER_DATA_FILE = "player_data.dat"
 PLAYER_NAME = "Guest"

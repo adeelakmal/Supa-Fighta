@@ -31,7 +31,14 @@ class LobbyState:
     def enter(self):
         self.running = True
         if self.player is None:
-            self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
+            try:
+                self.player = Player(
+                    (config.WINDOW_WIDTH // 2) - 120,
+                    config.WINDOW_HEIGHT - (120 + 20)
+                )
+            except ConnectionError as error:
+                print(f"Could not connect to the server: {error}")
+                self.state_manager.show_connection_error(str(error))
         else:
             self.player.player_reset()
             self.send_player_rejoined()
@@ -41,6 +48,14 @@ class LobbyState:
      
     def update(self):
         self.background.update()
+        if self.player is None:
+            return
+
+        connection_error = self.player.net.get_connection_error()
+        if connection_error:
+            self.state_manager.show_connection_error(connection_error)
+            return
+
         self.player.waiting_animation()
         server_message = self.player.net.get_last_response()
         if server_message:
@@ -56,9 +71,8 @@ class LobbyState:
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.sound_loader.get_sound("button_select").play()
-            self.player.net.close()
+            self.disconnect_player()
             self.state_manager.change_state("main_menu")
-            self.player = None
 
     def get_player(self):
         return self.player
@@ -88,3 +102,8 @@ class LobbyState:
             self.player.net.send({
                 "type": "player_rejoined"
             })
+
+    def disconnect_player(self):
+        if self.player and self.player.net:
+            self.player.net.close()
+        self.player = None

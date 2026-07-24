@@ -3,6 +3,7 @@ from game.states.gameplayState import GameplayState
 from game.states.lobby import LobbyState
 from game.states.settingsMenu import SettingsState
 from game.states.nameMenu import NameMenuState
+from game.states.connectionError import ConnectionErrorState
 from animations.sprites import SpriteSheet
 from animations.animation import Animator
 from type.sprite import SpriteProperties
@@ -26,7 +27,8 @@ class GameState:
             "main_menu": MainMenuState(self),
             "lobby": LobbyState(self),
             "settings": SettingsState(self),
-            "name_menu": NameMenuState(self)
+            "name_menu": NameMenuState(self),
+            "connection_error": ConnectionErrorState(self)
         }
         self.change_state("main_menu")
 
@@ -50,6 +52,17 @@ class GameState:
         if state:
             self.state_stack.append(state)
             state.enter()
+
+    def show_connection_error(self, message):
+        lobby_state = self.states["lobby"]
+        lobby_state.disconnect_player()
+        error_state = self.states["connection_error"]
+        error_state.set_message(message)
+
+        if self.current_state() == error_state:
+            return
+
+        self.change_state("connection_error")
 
     def push_state(self, state):
         self.state_stack.append(state)

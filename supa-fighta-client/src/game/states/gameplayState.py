@@ -62,6 +62,12 @@ class GameplayState:
 
     def update(self):
         self.background.update()
+        if not self.game_over:
+            connection_error = self.player.net.get_connection_error()
+            if connection_error:
+                self.state_manager.show_connection_error(connection_error)
+                return
+
         countdown_active = self.is_countdown_active()
         if countdown_active:
             self.player.velocity = 0

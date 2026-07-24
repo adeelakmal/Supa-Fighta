@@ -2,6 +2,7 @@ import threading
 import websocket
 import json
 import asyncio
+import time
 import config
 from player_manager import save_player_id
 
@@ -24,6 +25,9 @@ class WSClient:
         self._connected = True
         self._connection_error = None
         self._connection_lock = threading.Lock()
+        self._last_server_activity = time.monotonic()
+        self._heartbeat_lock = threading.Lock()
+        self._heartbeat_stop = threading.Event()
         self._response = None
         self.last_opponent_update = None
         self.last_player_correction = None
@@ -34,6 +38,11 @@ class WSClient:
         self._response_event = threading.Event()
         self._recv_thread = threading.Thread(target=self._start_async_recv_loop, daemon=True)
         self._recv_thread.start()
+        self._heartbeat_thread = threading.Thread(
+            target=self._heartbeat_loop,
+            daemon=True
+        )
+        self._heartbeat_thread.start()
         if config.PLAYER_ID:
             self.send({"type":'validate_player', "playerId": config.PLAYER_ID})
         else:
@@ -92,6 +101,7 @@ class WSClient:
         """Close the WebSocket connection gracefully."""
         print("Closing WebSocket connection...")
         self._running = False
+        self._heartbeat_stop.set()
         with self._connection_lock:
             self._connected = False
         try:
@@ -112,8 +122,48 @@ class WSClient:
                 self._connection_error = message
             self._connected = False
         self._running = False
+        self._heartbeat_stop.set()
+
+    def _record_server_activity(self):
+        with self._heartbeat_lock:
+            self._last_server_activity = time.monotonic()
+
+    def _heartbeat_tick(self, now=None):
+        if not self._running:
+            return False
+
+        current_time = time.monotonic() if now is None else now
+        with self._heartbeat_lock:
+            seconds_waiting = current_time - self._last_server_activity
+
+        if seconds_waiting >= config.WS_HEARTBEAT_TIMEOUT:
+            self._mark_connection_lost(
+                "The server stopped responding. Please try again."
+            )
+            return False
+
+        try:
+            # This is just a tiny "are you there?" check.
+            self.ws.ping("supa-fighta")
+            return True
+        except Exception as error:
+            print(f"Heartbeat failed: {error}")
+            self._mark_connection_lost("The connection to the server was lost.")
+            return False
+
+    def _heartbeat_loop(self):
+        while not self._heartbeat_stop.wait(config.WS_HEARTBEAT_INTERVAL):
+            if self._heartbeat_tick():
+                continue
+
+            try:
+                self.ws.close()
+            except Exception:
+                pass
+            return
 
     def _handle_server_message(self, data):
+        self._record_server_activity()
         self._response = data
         self._response_event.set()
 
@@ -165,13 +215,31 @@ class WSClient:
     async def _async_recv_loop(self):
         while self._running:
             try:
-                msg = await asyncio.to_thread(self.ws.recv)
-                if not msg:
+                opcode, message = await asyncio.to_thread(
+                    self.ws.recv_data,
+                    True
+                )
+
+                if opcode in (
+                    websocket.ABNF.OPCODE_PING,
+                    websocket.ABNF.OPCODE_PONG
+                ):
+                    # Any reply here proves the server is still reachable.
+                    self._record_server_activity()
+                    continue
+
+                if opcode == websocket.ABNF.OPCODE_CLOSE:
                     if self._running:
                         self._mark_connection_lost("The connection to the server was lost.")
                     break
 
-                data = json.loads(msg)
+                if opcode not in (
+                    websocket.ABNF.OPCODE_TEXT,
+                    websocket.ABNF.OPCODE_BINARY
+                ):
+                    continue
+
+                data = json.loads(message)
                 if not self._handle_server_message(data):
                     break
 

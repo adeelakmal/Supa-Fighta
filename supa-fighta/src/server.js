@@ -1,4 +1,5 @@
 const setupWebSocketServer = require('./wsServer');
+const config = require('./config/dotenv');
 
 
-setupWebSocketServer(8080);
+setupWebSocketServer(config.port);

@@ -20,7 +20,13 @@ class WSClient:
             self.ws.settimeout(None)
         except Exception as error:
             self.ws.close()
-            raise ConnectionError("Could not connect to the game server.") from error
+            print(
+                "WebSocket connection failed: "
+                f"{type(error).__name__}: {error!r}"
+            )
+            raise ConnectionError(
+                f"Could not connect to the game server: {error}"
+            ) from error
 
         self._running = True
         self._connected = True

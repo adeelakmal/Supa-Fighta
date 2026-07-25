@@ -160,6 +160,9 @@ MUSIC = {
 # WebSocket settings
 WS_URL = "wss://supa-fighta.onrender.com"
 # WS_URL = "ws://localhost:8080"
+WS_CONNECT_TIMEOUT = 30
+WS_HEARTBEAT_INTERVAL = 15
+WS_HEARTBEAT_TIMEOUT = 45
 PLAYER_ID = None
 PLAYER_DATA_FILE = "player_data.dat"
 PLAYER_NAME = "Guest"

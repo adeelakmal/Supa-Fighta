@@ -12,6 +12,14 @@ class PlayerRepository {
         `, [player.id, player.username]);
     }
 
+    async updatePlayerName(playerId, username){
+        return await this.pool.query(`
+            UPDATE players
+            SET player_name = $1
+            WHERE player_id = $2
+        `, [username, playerId]);
+    }
+
     async updatePlayerStats(player){
         if (!player) return;
         await this.pool.query(`

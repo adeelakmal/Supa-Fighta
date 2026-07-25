@@ -45,7 +45,13 @@ class WSClient:
         )
         self._heartbeat_thread.start()
         if config.PLAYER_ID:
-            self.send({"type":'validate_player', "playerId": config.PLAYER_ID})
+            validation_message = {
+                "type": "validate_player",
+                "playerId": config.PLAYER_ID
+            }
+            if config.PLAYER_NAME_WAS_EDITED:
+                validation_message["username"] = config.PLAYER_NAME
+            self.send(validation_message)
         else:
             self._create_player()
             
@@ -205,12 +211,18 @@ class WSClient:
             save_player_id(None, config.PLAYER_DATA_FILE)
             self._create_player()
 
+        if message_type == 'validation_result' and data.get('valid') is True:
+            config.PLAYER_NAME = data.get('username', config.PLAYER_NAME)
+            config.PLAYER_NAME_WAS_EDITED = False
+
         if message_type == 'player_created':
             player_id = data.get('playerId')
             if player_id:
                 save_player_id(player_id, config.PLAYER_DATA_FILE)
                 print(f"New player ID saved: {player_id}")
                 config.PLAYER_ID = player_id
+                config.PLAYER_NAME = data.get('username', config.PLAYER_NAME)
+                config.PLAYER_NAME_WAS_EDITED = False
 
         if message_type == 'opponent_update':
             position = data.get('position')

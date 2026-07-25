@@ -6,10 +6,24 @@ const PlayerRepository = require('../repositories/playerRepository')
 const MatchesRepository = require('../repositories/matchesRepository')
 const gameManager = require('./gameManager');
 
+const DEFAULT_PLAYER_NAME = 'Guest';
+const MAX_PLAYER_NAME_LENGTH = 20;
 const LOBBY = { players: [] };
 const playerRepository = new PlayerRepository(pool)
 const matchesRepository = new MatchesRepository(pool)
 let matchmakingInProgress = false;
+
+const normalizePlayerName = (username) => {
+    if (typeof username !== 'string') return DEFAULT_PLAYER_NAME;
+
+    const normalized = username
+        .replace(/[\u0000-\u001F\u007F]/g, '')
+        .trim()
+        .replace(/\s+/g, ' ');
+
+    return Array.from(normalized).slice(0, MAX_PLAYER_NAME_LENGTH).join('')
+        || DEFAULT_PLAYER_NAME;
+};
 
 const HandleMessage = async (ws, data) => {
     const { type, playerId, username } = data;
@@ -27,19 +41,39 @@ const HandleMessage = async (ws, data) => {
         if (ws.readyState !== WebSocket.OPEN) return;
 
         ws.id = playerId
-        const player = new Player(ws, player_exists.rows[0].player_name);
+        const savedPlayerName = normalizePlayerName(
+            player_exists.rows[0].player_name
+        );
+        const playerName = typeof username === 'string'
+            ? normalizePlayerName(username)
+            : savedPlayerName;
+
+        if (playerName !== savedPlayerName) {
+            await playerRepository.updatePlayerName(playerId, playerName);
+        }
+
+        const player = new Player(ws, playerName);
         player.id = playerId;
         LOBBY.players.push(player);
-        ws.send(JSON.stringify({ type: 'validation_result', valid: true, playerId }));
+        ws.send(JSON.stringify({
+            type: 'validation_result',
+            valid: true,
+            playerId,
+            username: player.username
+        }));
         broadcastToLobby(LOBBY, { type: 'player_joined', playerId: player.id });
 
     } else if (type === "create_player") {
-        const player = new Player(ws, username);
+        const player = new Player(ws, normalizePlayerName(username));
         await playerRepository.addNewPlayer(player)
         if (ws.readyState !== WebSocket.OPEN) return;
 
         LOBBY.players.push(player);
-        ws.send(JSON.stringify({ type: 'player_created', playerId: player.id }));
+        ws.send(JSON.stringify({
+            type: 'player_created',
+            playerId: player.id,
+            username: player.username
+        }));
         broadcastToLobby(LOBBY, { type: 'player_joined', playerId: player.id });
     } else if (type === "player_rejoined") {
         const player = LOBBY.players.find(p => p.id === ws.id);
@@ -141,6 +175,8 @@ const MatchmakePlayers = async () => {
             matchId: match_id,
             player1: player1.id,
             player2: player2.id,
+            player1Name: player1.username,
+            player2Name: player2.username,
             countdownSeconds: game.countdownSeconds,
             startsAt: game.startsAt,
             serverTime: Date.now()

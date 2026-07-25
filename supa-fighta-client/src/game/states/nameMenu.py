@@ -107,5 +107,6 @@ class NameMenuState:
                 self.key_delay = 16
 
     def _save_and_exit(self):
-        config.PLAYER_NAME = self.player_name_input
+        config.PLAYER_NAME = self.player_name_input.strip() or "Guest"
+        config.PLAYER_NAME_WAS_EDITED = True
         self.state_manager.pop_state()

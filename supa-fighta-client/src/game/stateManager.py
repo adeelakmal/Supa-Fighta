@@ -41,10 +41,13 @@ class GameState:
                 current_state.exit()
         if new_state == "gameplay":
             lobby_state = self.states["lobby"]
+            player_name, opponent_name = lobby_state.get_match_player_names()
             self.states["gameplay"] = GameplayState(
                 lobby_state.get_player(),
                 self,
-                lobby_state.get_match_countdown_seconds()
+                lobby_state.get_match_countdown_seconds(),
+                player_name,
+                opponent_name
             )
         # reset stack so we don't have to worry about going back to old states with old data
         self.state_stack = []

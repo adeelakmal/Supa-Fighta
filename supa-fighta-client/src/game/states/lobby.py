@@ -25,6 +25,8 @@ class LobbyState:
         )
         self.player = None
         self.match_countdown_seconds = 3.0
+        self.player_name = "Guest"
+        self.opponent_name = "Opponent"
         self.background = Animator(self.background_sprites, 10)
         self.sound_loader = SoundLoader.get_instance()
 
@@ -80,9 +82,22 @@ class LobbyState:
 
     def get_match_countdown_seconds(self):
         return self.match_countdown_seconds
+
+    def get_match_player_names(self):
+        return self.player_name, self.opponent_name
     
     def check_for_match(self, server_message: Dict):
-        if 'match_created' in server_message.get('type') and (server_message.get('player1', None) == config.PLAYER_ID or server_message.get('player2', None) == config.PLAYER_ID):
+        if server_message.get('type') == 'match_created' and (
+            server_message.get('player1') == config.PLAYER_ID
+            or server_message.get('player2') == config.PLAYER_ID
+        ):
+                if server_message.get('player1') == config.PLAYER_ID:
+                    self.player_name = server_message.get('player1Name', 'Guest')
+                    self.opponent_name = server_message.get('player2Name', 'Opponent')
+                else:
+                    self.player_name = server_message.get('player2Name', 'Guest')
+                    self.opponent_name = server_message.get('player1Name', 'Opponent')
+
                 starts_at = server_message.get('startsAt')
                 server_time = server_message.get('serverTime')
 

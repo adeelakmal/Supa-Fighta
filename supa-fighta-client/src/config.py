@@ -1,3 +1,5 @@
+import os
+
 # Game settings
 WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 360
@@ -156,11 +158,14 @@ MUSIC = {
 }
 
 # WebSocket settings
-WS_URL = "wss://supa-fighta-production.up.railway.app"
-# WS_URL = "ws://localhost:8080"
+WS_URL = os.getenv(
+    "SUPA_FIGHTA_WS_URL",
+    "wss://supa-fighta-production.up.railway.app"
+)
 WS_CONNECT_TIMEOUT = 5
 WS_HEARTBEAT_INTERVAL = 15
 WS_HEARTBEAT_TIMEOUT = 45
 PLAYER_ID = None
 PLAYER_DATA_FILE = "player_data.dat"
 PLAYER_NAME = "Guest"
+PLAYER_NAME_WAS_EDITED = False

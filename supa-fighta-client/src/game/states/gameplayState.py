@@ -15,15 +15,25 @@ FIGHT_MESSAGE_SECONDS = 0.7
 GAME_OVER_SECONDS = 5
 
 class GameplayState:
-    def __init__(self, player: Player, state_manager, countdown_seconds: float = 3.0):
+    def __init__(
+        self,
+        player: Player,
+        state_manager,
+        countdown_seconds: float = 3.0,
+        player_name: str = "Guest",
+        opponent_name: str = "Opponent"
+    ):
         self.running = True
         self.player = player
         self.state_manager = state_manager
+        self.player_name = player_name
+        self.opponent_name = opponent_name
         self.countdown_seconds = max(0.0, countdown_seconds)
         self.countdown_end_time = None
         self.fight_message_end_time = None
         self.countdown_number_font = pygame.font.SysFont(None, 96, bold=True)
         self.countdown_fight_font = pygame.font.SysFont(None, 82, bold=True)
+        self.player_name_font = pygame.font.Font("assets/determination.ttf", 14)
         # self.net = WSClient(config.WS_URL)
         if player is None: # for testing purposes
             self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
@@ -231,11 +241,29 @@ class GameplayState:
         text_rect = text.get_rect(center=center)
         surface.blit(shadow, shadow_rect)
         surface.blit(text, text_rect)
+
+    def draw_player_names(self, surface):
+        name_y = self.player.player_y - 18
+        player_center_x = self.player.player_x + (config.PLAYER_WIDTH // 2)
+        opponent_center_x = self.opponent.opponent_x + (config.PLAYER_WIDTH // 2)
+
+        for name, center_x in (
+            (self.player_name, player_center_x),
+            (self.opponent_name, opponent_center_x)
+        ):
+            shadow = self.player_name_font.render(name, True, (25, 20, 20))
+            text = self.player_name_font.render(name, True, (255, 255, 255))
+            text_rect = text.get_rect(center=(center_x, name_y))
+            text_rect.clamp_ip(surface.get_rect())
+            shadow_rect = text_rect.move(1, 1)
+            surface.blit(shadow, shadow_rect)
+            surface.blit(text, text_rect)
         
     def draw(self, screen: pygame.Surface):
         self.background.draw(screen)
         self.opponent.draw(screen)
         self.player.draw(screen)
+        self.draw_player_names(screen)
         if config.DEBUG:
             Collision.debug_draw(screen, self.player, self.opponent)
         self.draw_countdown(screen)

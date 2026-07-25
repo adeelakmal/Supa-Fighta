@@ -46,6 +46,7 @@ class GameState:
                 lobby_state.get_player(),
                 self,
                 lobby_state.get_match_countdown_seconds(),
+                lobby_state.get_match_duration_seconds(),
                 player_name,
                 opponent_name
             )

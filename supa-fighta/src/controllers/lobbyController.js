@@ -218,6 +218,7 @@ const MatchmakePlayers = async () => {
             player1Name: player1.username,
             player2Name: player2.username,
             countdownSeconds: game.countdownSeconds,
+            matchDurationSeconds: game.durationSeconds,
             startsAt: game.startsAt,
             serverTime: Date.now()
         });

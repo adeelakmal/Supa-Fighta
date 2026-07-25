@@ -25,6 +25,7 @@ class LobbyState:
         )
         self.player = None
         self.match_countdown_seconds = 3.0
+        self.match_duration_seconds = 20.0
         self.player_name = "Guest"
         self.opponent_name = "Opponent"
         self.background = Animator(self.background_sprites, 10)
@@ -92,6 +93,9 @@ class LobbyState:
     def get_match_countdown_seconds(self):
         return self.match_countdown_seconds
 
+    def get_match_duration_seconds(self):
+        return self.match_duration_seconds
+
     def get_match_player_names(self):
         return self.player_name, self.opponent_name
     
@@ -119,6 +123,15 @@ class LobbyState:
                         self.match_countdown_seconds = min(10.0, max(0.0, float(countdown)))
                     except (TypeError, ValueError):
                         self.match_countdown_seconds = 3.0
+
+                duration = server_message.get('matchDurationSeconds', 20)
+                try:
+                    self.match_duration_seconds = min(
+                        600.0,
+                        max(1.0, float(duration))
+                    )
+                except (TypeError, ValueError):
+                    self.match_duration_seconds = 20.0
 
                 self.state_manager.change_state("gameplay")
 

@@ -29,7 +29,8 @@ class Game {
             [player1.id]: [],
             [player2.id]: []
         };
-        this.timer = MATCH_DURATION_SECONDS * 60;
+        this.durationSeconds = MATCH_DURATION_SECONDS;
+        this.timer = this.durationSeconds * 60;
         this.winner = null;
         this.losser = null;
         this.interval = null;
@@ -53,6 +54,7 @@ class Game {
         const startMessage = {
             type: 'game_start',
             countdownSeconds: this.countdownSeconds,
+            matchDurationSeconds: this.durationSeconds,
             startsAt: this.startsAt
         };
         const player1Ready = this.sendToPlayer(

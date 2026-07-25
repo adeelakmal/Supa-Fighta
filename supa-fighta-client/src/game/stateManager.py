@@ -3,6 +3,7 @@ from game.states.gameplayState import GameplayState
 from game.states.lobby import LobbyState
 from game.states.settingsMenu import SettingsState
 from game.states.nameMenu import NameMenuState
+from game.states.connectionError import ConnectionErrorState
 from animations.sprites import SpriteSheet
 from animations.animation import Animator
 from type.sprite import SpriteProperties
@@ -26,7 +27,8 @@ class GameState:
             "main_menu": MainMenuState(self),
             "lobby": LobbyState(self),
             "settings": SettingsState(self),
-            "name_menu": NameMenuState(self)
+            "name_menu": NameMenuState(self),
+            "connection_error": ConnectionErrorState(self)
         }
         self.change_state("main_menu")
 
@@ -39,13 +41,38 @@ class GameState:
                 current_state.exit()
         if new_state == "gameplay":
             lobby_state = self.states["lobby"]
-            self.states["gameplay"] = GameplayState(lobby_state.get_player(), self)
+            player_name, opponent_name = lobby_state.get_match_player_names()
+            self.states["gameplay"] = GameplayState(
+                lobby_state.get_player(),
+                self,
+                lobby_state.get_match_countdown_seconds(),
+                lobby_state.get_match_duration_seconds(),
+                player_name,
+                opponent_name
+            )
         # reset stack so we don't have to worry about going back to old states with old data
         self.state_stack = []
         state = self.states.get(new_state)
         if state:
             self.state_stack.append(state)
             state.enter()
+
+    def show_connection_error(self, message):
+        lobby_state = self.states["lobby"]
+        lobby_state.disconnect_player()
+        error_state = self.states["connection_error"]
+        error_state.set_message(message)
+
+        if self.current_state() == error_state:
+            return
+
+        self.change_state("connection_error")
+
+    def show_name_error(self, message):
+        lobby_state = self.states["lobby"]
+        lobby_state.disconnect_player()
+        self.change_state("settings")
+        self.push_state(NameMenuState(self, message))
 
     def push_state(self, state):
         self.state_stack.append(state)

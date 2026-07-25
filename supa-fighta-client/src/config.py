@@ -1,3 +1,5 @@
+import os
+
 # Game settings
 WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 360
@@ -159,4 +161,6 @@ MUSIC = {
 WS_URL = "wss://supa-fighta.onrender.com"
 # WS_URL = "ws://localhost:8080"
 PLAYER_ID = None
+PLAYER_DATA_FILE = "player_data.dat"
 PLAYER_NAME = "Guest"
+PLAYER_NAME_WAS_EDITED = False

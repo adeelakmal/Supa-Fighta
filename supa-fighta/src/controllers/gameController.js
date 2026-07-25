@@ -2,10 +2,13 @@ const pool = require('../config/db');
 const MatchesRepository = require('../repositories/matchesRepository');
 const PlayerState = require('../models/playerState');
 const { Inputs } = require('../enums');
+const WebSocket = require('ws');
 const DASH_FACTOR = 2.5
+const MATCH_DURATION_SECONDS = 20;
+const INTRO_COUNTDOWN_SECONDS = 3;
 
 class Game {
-    constructor(matchId, player1, player2) {
+    constructor(matchId, player1, player2, onEnd = null) {
         this.matchRepository = new MatchesRepository(pool)
 
         this.matchId = matchId;
@@ -26,10 +29,16 @@ class Game {
             [player1.id]: [],
             [player2.id]: []
         };
-        this.timer = 10 * 60; // 60 seconds at 60Hz
+        this.durationSeconds = MATCH_DURATION_SECONDS;
+        this.timer = this.durationSeconds * 60;
         this.winner = null;
         this.losser = null;
         this.interval = null;
+        this.countdownTimeout = null;
+        this.countdownSeconds = INTRO_COUNTDOWN_SECONDS;
+        this.startsAt = null;
+        this.acceptingInput = false;
+        this.onEnd = onEnd;
         this.moveStep = 2;
         this.parryLocks = new Set();
         this.attackResolved = {
@@ -41,9 +50,46 @@ class Game {
 
     start() {
         console.log(`Starting match ${this.matchId} between ${this.player1.id} and ${this.player2.id}`);
-        this.player1.ws.send(JSON.stringify({ type: 'game_start', opponent: this.player2.id }));
-        this.player2.ws.send(JSON.stringify({ type: 'game_start', opponent: this.player1.id }));
-        this.interval = setInterval(() => this.tick(), 1000 / 60);
+        this.startsAt = Date.now() + (this.countdownSeconds * 1000);
+        const startMessage = {
+            type: 'game_start',
+            countdownSeconds: this.countdownSeconds,
+            matchDurationSeconds: this.durationSeconds,
+            startsAt: this.startsAt
+        };
+        const player1Ready = this.sendToPlayer(
+            this.player1,
+            { ...startMessage, opponent: this.player2.id }
+        );
+        const player2Ready = this.sendToPlayer(
+            this.player2,
+            { ...startMessage, opponent: this.player1.id }
+        );
+
+        if (!player1Ready || !player2Ready) {
+            const winner = player1Ready ? this.player1 : player2Ready ? this.player2 : null;
+            const losser = winner === this.player1 ? this.player2 : winner === this.player2 ? this.player1 : null;
+
+            [this.player1, this.player2].forEach(player => {
+                if (player.ws.readyState === WebSocket.OPEN) {
+                    player.status = 0;
+                    player.match_id = null;
+                }
+            });
+
+            void this.end(winner, losser, 'opponent_disconnected');
+            return false;
+        }
+
+        const countdownDelay = Math.max(0, this.startsAt - Date.now());
+        this.countdownTimeout = setTimeout(() => {
+            if (this.status === 1) return;
+
+            this.acceptingInput = true;
+            this.interval = setInterval(() => this.tick(), 1000 / 60);
+        }, countdownDelay);
+
+        return true;
     }
 
     receiveInput(playerId, input) {
@@ -54,7 +100,7 @@ class Game {
         // Advance timer and check for end
         this.timer--;
         if (this.timer <= 0) {
-            this.end(null, null); // Draw or time-out
+            void this.end(null, null, 'timeout');
         }
     }
 
@@ -149,7 +195,7 @@ class Game {
                         console.log(`Player ${playerId} punched Player ${otherId}`);
                         this.winner = this.player1.id === playerId ? this.player1 : this.player2;
                         this.losser = this.player1.id === playerId ? this.player2 : this.player1;
-                        this.end(this.winner, this.losser);
+                        void this.end(this.winner, this.losser);
                     }
                 }
                 break;
@@ -190,11 +236,25 @@ class Game {
 
     sendToOpponent(playerId, message) {
         const opponentId = playerId === this.player1.id ? this.player2.id : this.player1.id;
-        const opponentWs = opponentId === this.player1.id ? this.player1.ws : this.player2.ws;
-        opponentWs.send(JSON.stringify(message));
+        const opponent = opponentId === this.player1.id ? this.player1 : this.player2;
+        this.sendToPlayer(opponent, message);
+    }
+
+    sendToPlayer(player, message) {
+        if (player.ws.readyState !== WebSocket.OPEN) return false;
+
+        try {
+            player.ws.send(JSON.stringify(message));
+            return true;
+        } catch (err) {
+            console.error(`Failed to send match ${this.matchId} message to ${player.id}:`, err);
+            return false;
+        }
     }
 
     validateState(playerId, snapshot) {
+        if (!this.acceptingInput || this.status === 1) return;
+
         const player_state  = snapshot.player;
         const { history, state} = player_state;
         let x = player_state.x;
@@ -214,7 +274,7 @@ class Game {
         if (Math.abs(x - serverPos.x) > 10) {
             console.log(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}, correcting to x=${serverPos.x}`);
             const target = playerId === this.player1.id ? this.player1 : this.player2;
-            target.ws.send(JSON.stringify({type: 'correction', position: serverPos.x}));
+            this.sendToPlayer(target, {type: 'correction', position: serverPos.x});
         } 
         // console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
 
@@ -230,12 +290,13 @@ class Game {
         this.sendToOpponent(playerId, message);
     }
 
-    async end(winner, losser) {
+    async end(winner, losser, reason = 'completed') {
+        if (this.status === 1) return;
 
+        clearTimeout(this.countdownTimeout);
         clearInterval(this.interval);
         this.status = 1;
-        await this.matchRepository.updateMatchStatus(winner,this.matchId)
-
+        this.acceptingInput = false;
 
         // Update players' stats
         if (winner) {
@@ -252,9 +313,23 @@ class Game {
         }
 
         // Notify players that the game has ended
-        this.player1.ws.send(JSON.stringify({ type: 'game_end', winner: winner ? winner.id : null }));
-        this.player2.ws.send(JSON.stringify({ type: 'game_end', winner: winner ? winner.id : null }));
-        return;
+        const message = {
+            type: 'game_end',
+            winner: winner ? winner.id : null,
+            reason
+        };
+        this.sendToPlayer(this.player1, message);
+        this.sendToPlayer(this.player2, message);
+
+        if (this.onEnd) {
+            this.onEnd(this);
+        }
+
+        try {
+            await this.matchRepository.updateMatchStatus(winner, this.matchId);
+        } catch (err) {
+            console.error(`Failed to save result for match ${this.matchId}:`, err);
+        }
     }
 }
 

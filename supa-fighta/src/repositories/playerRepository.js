@@ -5,11 +5,19 @@ class PlayerRepository {
     async getPlayerById (id){
         return await this.pool.query('SELECT * FROM players WHERE player_id = $1', [id]);
     }
-    addNewPlayer(player){
-        this.pool.query(`
+    async addNewPlayer(player){
+        return await this.pool.query(`
             INSERT INTO players (player_id, player_name, status)
             VALUES ($1, $2, 0)
         `, [player.id, player.username]);
+    }
+
+    async updatePlayerName(playerId, username){
+        return await this.pool.query(`
+            UPDATE players
+            SET player_name = $1
+            WHERE player_id = $2
+        `, [username, playerId]);
     }
 
     async updatePlayerStats(player){

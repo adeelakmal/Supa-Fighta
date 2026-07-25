@@ -24,13 +24,24 @@ class LobbyState:
             )
         )
         self.player = None
+        self.match_countdown_seconds = 3.0
+        self.match_duration_seconds = 20.0
+        self.player_name = "Guest"
+        self.opponent_name = "Opponent"
         self.background = Animator(self.background_sprites, 10)
         self.sound_loader = SoundLoader.get_instance()
 
     def enter(self):
         self.running = True
         if self.player is None:
-            self.player = Player((config.WINDOW_WIDTH // 2) - 120, config.WINDOW_HEIGHT - (120 + 20))
+            try:
+                self.player = Player(
+                    (config.WINDOW_WIDTH // 2) - 120,
+                    config.WINDOW_HEIGHT - (120 + 20)
+                )
+            except ConnectionError as error:
+                print(f"Could not connect to the server: {error}")
+                self.state_manager.show_connection_error(str(error))
         else:
             self.player.player_reset()
             self.send_player_rejoined()
@@ -40,10 +51,28 @@ class LobbyState:
      
     def update(self):
         self.background.update()
+        if self.player is None:
+            return
+
+        connection_error = self.player.net.get_connection_error()
+        if connection_error:
+            self.state_manager.show_connection_error(connection_error)
+            return
+
+        name_rejected = self.player.net.get_name_rejected_message()
+        if name_rejected:
+            message = str(
+                name_rejected.get('message')
+                or "Please choose another player name."
+            )
+            self.state_manager.show_name_error(message)
+            return
+
         self.player.waiting_animation()
-        server_message = self.player.net.get_last_response()
-        if server_message:
-            self.check_for_match(server_message)
+        # The network keeps this safe until the lobby reads it here.
+        match_message = self.player.net.get_match_created_message()
+        if match_message:
+            self.check_for_match(match_message)
 
     def draw(self, screen):
         self.background.draw(screen)
@@ -55,15 +84,55 @@ class LobbyState:
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
             self.sound_loader.get_sound("button_select").play()
-            self.player.net.close()
+            self.disconnect_player()
             self.state_manager.change_state("main_menu")
-            self.player = None
 
     def get_player(self):
         return self.player
+
+    def get_match_countdown_seconds(self):
+        return self.match_countdown_seconds
+
+    def get_match_duration_seconds(self):
+        return self.match_duration_seconds
+
+    def get_match_player_names(self):
+        return self.player_name, self.opponent_name
     
     def check_for_match(self, server_message: Dict):
-        if 'match_created' in server_message.get('type') and (server_message.get('player1', None) == config.PLAYER_ID or server_message.get('player2', None) == config.PLAYER_ID):
+        if server_message.get('type') == 'match_created' and (
+            server_message.get('player1') == config.PLAYER_ID
+            or server_message.get('player2') == config.PLAYER_ID
+        ):
+                if server_message.get('player1') == config.PLAYER_ID:
+                    self.player_name = server_message.get('player1Name', 'Guest')
+                    self.opponent_name = server_message.get('player2Name', 'Opponent')
+                else:
+                    self.player_name = server_message.get('player2Name', 'Guest')
+                    self.opponent_name = server_message.get('player1Name', 'Opponent')
+
+                starts_at = server_message.get('startsAt')
+                server_time = server_message.get('serverTime')
+
+                if isinstance(starts_at, (int, float)) and isinstance(server_time, (int, float)):
+                    remaining_ms = max(0, starts_at - server_time)
+                    self.match_countdown_seconds = min(10.0, remaining_ms / 1000)
+                else:
+                    countdown = server_message.get('countdownSeconds', 3)
+                    try:
+                        self.match_countdown_seconds = min(10.0, max(0.0, float(countdown)))
+                    except (TypeError, ValueError):
+                        self.match_countdown_seconds = 3.0
+
+                duration = server_message.get('matchDurationSeconds', 20)
+                try:
+                    self.match_duration_seconds = min(
+                        600.0,
+                        max(1.0, float(duration))
+                    )
+                except (TypeError, ValueError):
+                    self.match_duration_seconds = 20.0
+
                 self.state_manager.change_state("gameplay")
 
     def send_player_rejoined(self):
@@ -71,3 +140,8 @@ class LobbyState:
             self.player.net.send({
                 "type": "player_rejoined"
             })
+
+    def disconnect_player(self):
+        if self.player and self.player.net:
+            self.player.net.close()
+        self.player = None

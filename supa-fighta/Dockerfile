@@ -10,8 +10,7 @@ RUN npm run build --if-present
 
 FROM node:18-alpine AS runtime
 WORKDIR /app
-ENV NODE_ENV=production \
-    PORT=3000
+ENV NODE_ENV=production
 # copy only what's needed for runtime
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/node_modules ./node_modules

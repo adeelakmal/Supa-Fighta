@@ -156,7 +156,7 @@ MUSIC = {
 }
 
 # WebSocket settings
-WS_URL = "https://supa-fighta.onrender.com"
+WS_URL = "wss://supa-fighta.onrender.com"
 # WS_URL = "ws://localhost:8080"
 PLAYER_ID = None
 PLAYER_NAME = "Guest"

@@ -58,6 +58,15 @@ class LobbyState:
             self.state_manager.show_connection_error(connection_error)
             return
 
+        name_rejected = self.player.net.get_name_rejected_message()
+        if name_rejected:
+            message = str(
+                name_rejected.get('message')
+                or "Please choose another player name."
+            )
+            self.state_manager.show_name_error(message)
+            return
+
         self.player.waiting_animation()
         # The network keeps this safe until the lobby reads it here.
         match_message = self.player.net.get_match_created_message()

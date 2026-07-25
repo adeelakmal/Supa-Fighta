@@ -67,6 +67,12 @@ class GameState:
 
         self.change_state("connection_error")
 
+    def show_name_error(self, message):
+        lobby_state = self.states["lobby"]
+        lobby_state.disconnect_player()
+        self.change_state("settings")
+        self.push_state(NameMenuState(self, message))
+
     def push_state(self, state):
         self.state_stack.append(state)
 

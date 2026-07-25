@@ -1,10 +1,12 @@
 import pygame
 import config
+from player_name import MAX_PLAYER_NAME_LENGTH, validate_player_name
 
 class NameMenuState:
-    def __init__(self, state_manager):
+    def __init__(self, state_manager, error_message=None):
         self.state_manager = state_manager
         self.player_name_input = config.PLAYER_NAME
+        self.error_message = error_message
         self.sub_menu_bg = pygame.image.load("assets/sub_menu.png").convert_alpha()
         self.textfield = pygame.image.load("assets/textfield.png").convert_alpha()
         self.held_key = None
@@ -24,7 +26,7 @@ class NameMenuState:
         if self.held_key and not self.backspace_held:
             self.key_tick += 1
             if self.key_tick >= self.key_delay:
-                if len(self.player_name_input) < 20:
+                if len(self.player_name_input) < MAX_PLAYER_NAME_LENGTH:
                     self.player_name_input += self.held_key
                 self.key_tick = 0
                 self.key_delay = max(3, self.key_delay - 4)
@@ -76,6 +78,20 @@ class NameMenuState:
                 (163, 88, 48),
                 (text_x + input_text.get_width() + 1, text_y, 2, input_text.get_height() - 1)
             )
+        if self.error_message:
+            error_font = pygame.font.Font("assets/determination.ttf", 11)
+            error_text = error_font.render(
+                self.error_message,
+                True,
+                (150, 45, 45)
+            )
+            error_rect = error_text.get_rect(
+                center=(
+                    sub_x + (sub_width // 2),
+                    input_rect.bottom + 14
+                )
+            )
+            screen.blit(error_text, error_rect)
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
@@ -86,13 +102,15 @@ class NameMenuState:
             elif event.key == pygame.K_BACKSPACE:
                 if len(self.player_name_input) > 0:
                     self.player_name_input = self.player_name_input[:-1]
+                self.error_message = None
                 self.backspace_held = True
                 self.backspace_tick = 0
                 self.backspace_delay = 10
             else:
                 if event.unicode.isprintable():
-                    if len(self.player_name_input) < 20:
+                    if len(self.player_name_input) < MAX_PLAYER_NAME_LENGTH:
                         self.player_name_input += event.unicode
+                    self.error_message = None
                     self.held_key = event.unicode
                     self.key_tick = 0
                     self.key_delay = 16
@@ -107,6 +125,13 @@ class NameMenuState:
                 self.key_delay = 16
 
     def _save_and_exit(self):
-        config.PLAYER_NAME = self.player_name_input.strip() or "Guest"
+        player_name, error_message = validate_player_name(
+            self.player_name_input
+        )
+        if error_message:
+            self.error_message = error_message
+            return
+
+        config.PLAYER_NAME = player_name
         config.PLAYER_NAME_WAS_EDITED = True
         self.state_manager.pop_state()

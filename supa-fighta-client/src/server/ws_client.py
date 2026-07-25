@@ -36,6 +36,8 @@ class WSClient:
         self._match_created_lock = threading.Lock()
         self._game_end_message = None
         self._game_end_lock = threading.Lock()
+        self._name_rejected_message = None
+        self._name_rejected_lock = threading.Lock()
         self._response_event = threading.Event()
         self._recv_thread = threading.Thread(target=self._start_async_recv_loop, daemon=True)
         self._recv_thread.start()
@@ -88,6 +90,12 @@ class WSClient:
         with self._match_created_lock:
             message = self._match_created_message
             self._match_created_message = None
+            return message
+
+    def get_name_rejected_message(self):
+        with self._name_rejected_lock:
+            message = self._name_rejected_message
+            self._name_rejected_message = None
             return message
 
     def get_connection_error(self):
@@ -196,6 +204,10 @@ class WSClient:
         if message_type == 'game_end':
             with self._game_end_lock:
                 self._game_end_message = data
+
+        if message_type == 'name_rejected':
+            with self._name_rejected_lock:
+                self._name_rejected_message = data
 
         if message_type == 'error':
             error_message = str(

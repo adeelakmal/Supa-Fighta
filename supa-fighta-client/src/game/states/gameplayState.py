@@ -10,7 +10,7 @@ import math
 import pygame
 import time
 
-SNAPSHOT_INTERVAL = 1 / 30
+SNAPSHOT_INTERVAL = 1 / 60
 FIGHT_MESSAGE_SECONDS = 0.7
 GAME_OVER_SECONDS = 5
 RESULT_ANIMATION_MAX_SECONDS = 3
@@ -62,6 +62,7 @@ class GameplayState:
         self.background = Animator(self.background_sprites, 10)
         self._last_snapshot_time = time.time()
         self._current_time = time.time()
+        self._last_sent_player_state = None
         self.game_over = False
         self.show_game_over_overlay = False
         self.final_message = None
@@ -79,6 +80,7 @@ class GameplayState:
         self.fight_message_end_time = self.countdown_end_time + FIGHT_MESSAGE_SECONDS
         self.match_end_time = self.countdown_end_time + self.match_duration_seconds
         self.player.velocity = 0
+        self._last_sent_player_state = None
         self.running = True
 
     def exit(self):
@@ -118,14 +120,14 @@ class GameplayState:
 
         if Collision.check_overlap(self.player, self.opponent):
             if self.player.player_state!="idle":
-                self.player.speed = 1
+                self.player.speed = config.PLAYER_MOVE_SPEED / 2
                 self.opponent.opponent_x=self.player.player_x + 80
             else:
                 self.opponent.speed = 1
                 self.player.player_x=self.opponent.opponent_x - 80
 
         else:
-            self.player.speed = 2
+            self.player.speed = config.PLAYER_MOVE_SPEED
             self.opponent.speed = 2
         
         # temp repositioning  
@@ -149,7 +151,14 @@ class GameplayState:
             self.player._inputs.clear()
 
         self._current_time = time.time()
-        if not countdown_active and self._current_time - self._last_snapshot_time >= SNAPSHOT_INTERVAL:
+        dash_started = (
+            self.player.player_state == 'dash'
+            and self._last_sent_player_state != 'dash'
+        )
+        snapshot_due = (
+            self._current_time - self._last_snapshot_time >= SNAPSHOT_INTERVAL
+        )
+        if not countdown_active and (dash_started or snapshot_due):
             snapshot = self._create_state_snapshot()
             self.player.net.send_snapshot(snapshot)
             self._cleanup()
@@ -417,6 +426,7 @@ class GameplayState:
         return snapshot
     
     def _cleanup(self):
+        self._last_sent_player_state = self.player.player_state
         self.player._inputs.clear()
         self._last_snapshot_time = self._current_time
         

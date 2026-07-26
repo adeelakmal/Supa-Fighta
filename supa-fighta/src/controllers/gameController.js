@@ -3,7 +3,12 @@ const MatchesRepository = require('../repositories/matchesRepository');
 const PlayerState = require('../models/playerState');
 const { Inputs } = require('../enums');
 const WebSocket = require('ws');
-const DASH_FACTOR = 2.5
+const DASH_FACTOR = 2.1
+const MOVE_SPEED = 3;
+const ACCELERATION = 0.45;
+const DECELERATION = 0.65;
+const MAX_FRAME_SPEED = MOVE_SPEED * DASH_FACTOR;
+const POSITION_EPSILON = 2;
 const MATCH_DURATION_SECONDS = 20;
 const INTRO_COUNTDOWN_SECONDS = 3;
 
@@ -29,6 +34,10 @@ class Game {
             [player1.id]: [],
             [player2.id]: []
         };
+        this.lastAcceptedPositions = {
+            [player1.id]: 200,
+            [player2.id]: 200
+        };
         this.durationSeconds = MATCH_DURATION_SECONDS;
         this.timer = this.durationSeconds * 60;
         this.winner = null;
@@ -39,7 +48,7 @@ class Game {
         this.startsAt = null;
         this.acceptingInput = false;
         this.onEnd = onEnd;
-        this.moveStep = 2;
+        this.moveStep = MOVE_SPEED;
         this.parryLocks = new Set();
         this.attackResolved = {
             [player1.id]: false,
@@ -121,62 +130,31 @@ class Game {
         switch (input) {
             case 'idle':
                 player.state = 'idle'
+                pos.velocity = this.approach(pos.velocity, 0, DECELERATION);
+                this.movePlayer(pos, reversedOtherPos, otherPos);
                 break;
             case 'walk_left':
                 player.state = input;
-                if ( pos.x - this.moveStep > 0 ) {
-                    pos.x -= this.moveStep;
-                }
-                else{
-                    pos.x = 0;
-                }
+                pos.velocity = this.accelerate(pos.velocity, -this.moveStep);
+                this.movePlayer(pos, reversedOtherPos, otherPos);
                 break;
             case 'walk_right':
                 player.state = input;
-                if ( pos.x + this.moveStep <= reversedOtherPos.x - 80 ) {
-                    pos.x += this.moveStep;
-                }
-                else if ( pos.x + this.moveStep > 640 - (80*2)) {
-                    console.log("right side limit reached");
-                    pos.x = 640 - (80*2);
-                }
-                else {
-                    // else players are definitely overlapping so we add pushing logic here
-                    console.log("players pushing");
-                    pos.x = pos.x + 1;
-                    // console.log(`Player ${playerId} position after push: ${pos.x}`);
-                    reversedOtherPos.x = Math.min(640 - 80, +(pos.x + 80));
-                    otherPos.x = this.reversePosition(reversedOtherPos).x;
-                  
-                }
+                pos.velocity = this.accelerate(pos.velocity, this.moveStep);
+                this.movePlayer(pos, reversedOtherPos, otherPos);
                 break;
             case 'dash_left':
                 player.state = input;
-                if ( pos.x - this.moveStep > 0 ) {
-                    pos.x -= this.moveStep * (DASH_FACTOR - 0.5);
-                }
-                else {
-                    pos.x = 0;
-                }
+                pos.velocity = -this.moveStep * (DASH_FACTOR - 0.5);
+                this.movePlayer(pos, reversedOtherPos, otherPos);
                 break;
             case 'dash_right':
                 player.state = input;
-                if (pos.x + (this.moveStep * DASH_FACTOR) <= reversedOtherPos.x - 80 ) {
-                    pos.x += this.moveStep * DASH_FACTOR;
-                }
-                else if ( pos.x + (this.moveStep * DASH_FACTOR) > 640 - (80*2)) {
-                    console.log("right side limit reached");
-                    pos.x = 640 - (80 * 2);
-                } 
-                else {
-                    // else players are definitely overlapping so we add pushing logic here
-                    console.log("players pushing");
-                    pos.x += 1 * DASH_FACTOR;
-                    reversedOtherPos.x = Math.min(640 - 80, (pos.x + 80));
-                    otherPos.x = this.reversePosition(reversedOtherPos).x;
-                }
+                pos.velocity = this.moveStep * DASH_FACTOR;
+                this.movePlayer(pos, reversedOtherPos, otherPos);
                 break;
             case 'punch':
+                this.movePlayer(pos, reversedOtherPos, otherPos);
                 if (this.attackResolved[playerId]) {
                     break;
                 }
@@ -200,16 +178,53 @@ class Game {
                 }
                 break;
             case 'parry':
+                this.movePlayer(pos, reversedOtherPos, otherPos);
                 player.state = Inputs.PARRY
                 break;
             case 'parry-hit':
             case 'parried':
+                this.movePlayer(pos, reversedOtherPos, otherPos);
                 player.state = input;
                 break;
             default:
                 // console.log("Unknown input:", input);
                 break;
         }
+    }
+
+    approach(current, target, amount) {
+        if (current < target) return Math.min(current + amount, target);
+        if (current > target) return Math.max(current - amount, target);
+        return target;
+    }
+
+    accelerate(current, target) {
+        const reversing = current !== 0 && Math.sign(current) !== Math.sign(target);
+        return this.approach(
+            current,
+            target,
+            ACCELERATION + (reversing ? DECELERATION : 0)
+        );
+    }
+
+    movePlayer(pos, reversedOtherPos, otherPos) {
+        const nextX = pos.x + pos.velocity;
+        if (pos.velocity <= 0) {
+            pos.x = Math.max(0, nextX);
+            return;
+        }
+
+        const rightEdge = 640 - (80 * 2);
+        if (nextX <= reversedOtherPos.x - 80) {
+            pos.x = Math.min(rightEdge, nextX);
+            return;
+        }
+
+        // Match the client's reduced pushing speed while keeping both server
+        // positions separated.
+        pos.x = Math.min(rightEdge, pos.x + Math.min(pos.velocity, MOVE_SPEED / 2));
+        reversedOtherPos.x = Math.min(640 - 80, pos.x + 80);
+        otherPos.x = this.reversePosition(reversedOtherPos).x;
     }
 
     reversePosition(position) {
@@ -259,23 +274,38 @@ class Game {
         const { history, state} = player_state;
         let x = player_state.x;
         const serverPos = this.positions[playerId];
+        const previousAcceptedX = this.lastAcceptedPositions[playerId];
         history.forEach((input, index) => {
             if (this.status!=1) {
                 this.processInput(playerId, input); 
             }
             
         })
-        if (history[history.length - 1] === "dash_right") {
-            console.log(`Player ${playerId} history: ${history}`);
-            console.log(`serverPos after dash_right processing: x=${serverPos.x}`);
-            console.log(`vs client x=${x}`);
-        }
-        // console.log(`Player ${playerId} position: client x=${x}, server x=${serverPos.x}`);
-        if (Math.abs(x - serverPos.x) > 10) {
-            console.log(`Desync detected for player ${playerId} diff: ${Math.abs(x - serverPos.x)}, correcting to x=${serverPos.x}`);
+        const maxSnapshotTravel = (
+            history.length * MAX_FRAME_SPEED
+        ) + POSITION_EPSILON;
+        const clientTravel = Math.abs(x - previousAcceptedX);
+        const positionInBounds = x >= 0 && x <= 640 - (80 * 2);
+
+        if (!positionInBounds || clientTravel > maxSnapshotTravel) {
+            console.log(
+                `Invalid movement for player ${playerId}: ` +
+                `travel=${clientTravel}, allowed=${maxSnapshotTravel}`
+            );
             const target = playerId === this.player1.id ? this.player1 : this.player2;
-            this.sendToPlayer(target, {type: 'correction', position: serverPos.x});
-        } 
+            this.sendToPlayer(target, {
+                type: 'correction',
+                position: previousAcceptedX
+            });
+            serverPos.x = previousAcceptedX;
+        } else {
+            // Input labels are still processed for combat and state, but the
+            // validated client position is the reconciliation point. Trying
+            // to reproduce client acceleration from 30 Hz snapshots creates
+            // frame-order drift and visible correction loops.
+            serverPos.x = x;
+            this.lastAcceptedPositions[playerId] = x;
+        }
         // console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
 
         // send response to opponent

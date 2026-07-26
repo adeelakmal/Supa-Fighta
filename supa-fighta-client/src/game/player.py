@@ -7,7 +7,7 @@ from sound_loader import SoundLoader
 ACTIONABLE_STATES = ['dash', 'punch', 'parry', 'parry-hit', 'parried']
 NO_SFX_STATES = ['walk', 'idle', 'wait', 'hurt', 'win', 'parry-hit', 'parried']
 END_STATES = ['hurt', 'win']
-DASH_FACTOR = 2.5
+DASH_FACTOR = 2.1
 
 class Player:
     def __init__(self, x, y):
@@ -17,7 +17,7 @@ class Player:
         self._inputs = []
         self.player_x = x
         self.player_y = y
-        self.speed = 2
+        self.speed = config.PLAYER_MOVE_SPEED
         self.player_state ='wait'
         self.parry_hit_registered = False
         self.attack_resolved = False
@@ -27,15 +27,28 @@ class Player:
         self.hurt_done=False
         self.net = WSClient(config.WS_URL)
         self.recovery_until = 0
+
+    @staticmethod
+    def _approach(current, target, amount):
+        if current < target:
+            return min(current + amount, target)
+        if current > target:
+            return max(current - amount, target)
+        return target
+
     def handle_keys(self):
         keys = pygame.key.get_pressed()
         now = pygame.time.get_ticks()
 
         if now < self.recovery_until:
+            self.velocity = self._approach(
+                self.velocity, 0, config.PLAYER_DECELERATION
+            )
             return
 
-        self.player_state = 'idle' 
-        self.velocity = 0
+        self.player_state = 'idle'
+        direction = int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT])
+        target_velocity = 0
         
         if keys[pygame.K_SPACE]:
             if self.player_state != 'punch':
@@ -56,7 +69,9 @@ class Player:
                 self.player_assets.get_animation('dash').reset()
             else:
                 self.player_state = 'walk'
-            self.velocity = -self.speed * ((DASH_FACTOR-0.5) if self.player_state == 'dash' else 1)
+            target_velocity = -self.speed * (
+                (DASH_FACTOR - 0.5) if self.player_state == 'dash' else 1
+            )
             self.last_tap_time[pygame.K_LEFT] = now
         if keys[pygame.K_RIGHT]:
             delta_right_tap = now - self.last_tap_time[pygame.K_RIGHT]
@@ -65,8 +80,29 @@ class Player:
                 self.player_assets.get_animation('dash').reset()
             else:
                 self.player_state = 'walk'
-            self.velocity = self.speed * (DASH_FACTOR if self.player_state == 'dash' else 1)
+            target_velocity = self.speed * (
+                DASH_FACTOR if self.player_state == 'dash' else 1
+            )
             self.last_tap_time[pygame.K_RIGHT] = now
+
+        # Ramp toward the requested speed and ease to a stop when released.
+        # Reversing gets extra acceleration so the controls remain responsive.
+        if self.player_state == 'dash':
+            # Dash becomes animation-locked after this input pass, so its
+            # burst speed must be applied immediately rather than ramped over
+            # frames that will never call handle_keys().
+            self.velocity = target_velocity
+        elif direction == 0:
+            self.velocity = self._approach(
+                self.velocity, 0, config.PLAYER_DECELERATION
+            )
+        else:
+            acceleration = config.PLAYER_ACCELERATION
+            if self.velocity and (self.velocity > 0) != (target_velocity > 0):
+                acceleration += config.PLAYER_DECELERATION
+            self.velocity = self._approach(
+                self.velocity, target_velocity, acceleration
+            )
 
     def update(self, opponent_walking_in: bool, game_over: bool):
         self.player_assets.get_animation(self.player_state).update()

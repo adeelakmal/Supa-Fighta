@@ -7,6 +7,11 @@ const DASH_FACTOR = 2.1
 const MOVE_SPEED = 3;
 const MAX_FRAME_SPEED = MOVE_SPEED * DASH_FACTOR;
 const POSITION_EPSILON = 2;
+// The client runs at 60 FPS and the punch animation at 25 FPS. These inputs
+// line up with animation frames 3-5, where the fist is visibly extended.
+const PUNCH_ACTIVE_INPUT_START = 10;
+const PUNCH_ACTIVE_INPUT_END = 18;
+const PARRY_ACTIVE_INPUT_END = 15;
 const MATCH_DURATION_SECONDS = 20;
 const INTRO_COUNTDOWN_SECONDS = 3;
 
@@ -50,6 +55,14 @@ class Game {
         this.attackResolved = {
             [player1.id]: false,
             [player2.id]: false
+        };
+        this.attackProgress = {
+            [player1.id]: 0,
+            [player2.id]: 0
+        };
+        this.parryProgress = {
+            [player1.id]: 0,
+            [player2.id]: 0
         };
 
     }
@@ -122,6 +135,10 @@ class Game {
         if (input !== 'punch') {
             this.parryLocks.delete(parryLockKey);
             this.attackResolved[playerId] = false;
+            this.attackProgress[playerId] = 0;
+        }
+        if (input !== 'parry') {
+            this.parryProgress[playerId] = 0;
         }
 
         switch (input) {
@@ -135,14 +152,26 @@ class Game {
                 player.state = input;
                 break;
             case 'punch':
+                player.state = 'punch';
+                this.attackProgress[playerId]++;
                 if (this.attackResolved[playerId]) {
                     break;
                 }
-                player.state = 'punch';
+                if (
+                    this.attackProgress[playerId] < PUNCH_ACTIVE_INPUT_START
+                    || this.attackProgress[playerId] > PUNCH_ACTIVE_INPUT_END
+                ) {
+                    break;
+                }
                 if(pos.x+80+30 > reversedOtherPos.x) {
                     this.attackResolved[playerId] = true;
                     let otherPlayer = this.player1.id === otherId ? this.player1 : this.player2;
-                    if (otherPlayer.state == Inputs.PARRY){
+                    const parryIsActive = (
+                        otherPlayer.state === Inputs.PARRY
+                        && this.parryProgress[otherId] > 0
+                        && this.parryProgress[otherId] <= PARRY_ACTIVE_INPUT_END
+                    );
+                    if (parryIsActive){
                         if (!this.parryLocks.has(parryLockKey)) {
                             console.log(`Player ${otherId} parried Player ${playerId}`);
                             this.parryLocks.add(parryLockKey);
@@ -159,6 +188,7 @@ class Game {
                 break;
             case 'parry':
                 player.state = Inputs.PARRY
+                this.parryProgress[playerId]++;
                 break;
             case 'parry-hit':
             case 'parried':

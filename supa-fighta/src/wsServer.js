@@ -69,7 +69,7 @@ const setupWebSocketServer = (port) => {
           }
 
           // Use the identity assigned to this socket instead of trusting client input.
-          gameManager.routeInput(LOBBY, ws.id, data.snapshot);
+          gameManager.routeInput(LOBBY, ws.id, data.matchId, data.snapshot);
           return;
         }
 

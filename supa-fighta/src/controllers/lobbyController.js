@@ -120,6 +120,13 @@ const HandleMessage = async (ws, data) => {
         if (!player) {
             throw Error("Player not found in lobby");
         }
+
+        // A client must not be able to re-enter matchmaking while its previous
+        // game is still active (or while it is already being matched).
+        if (player.status === 2 || gameManager.hasActiveGameForPlayer(player.id)) {
+            return;
+        }
+
         player.status = 0;
         player.match_id = null;
     } else {

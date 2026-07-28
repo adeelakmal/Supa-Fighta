@@ -27,6 +27,7 @@ class Player:
         self.hurt_done=False
         self.net = WSClient(config.WS_URL)
         self.recovery_until = 0
+        self.buffered_action = None
 
     @staticmethod
     def _approach(current, target, amount):
@@ -36,7 +37,86 @@ class Player:
             return max(current - amount, target)
         return target
 
-    def handle_keys(self):
+    def _start_action(self, state, now):
+        self.enter_state(state)
+        self.velocity = 0
+        self.recovery_until = (
+            now + config.RECOVERY_DURATIONS.get(state, 0)
+        )
+        self.buffered_action = None
+
+    def _request_action(self, state, now):
+        if self.player_state in END_STATES:
+            return
+
+        if (
+            self.player_state in ACTIONABLE_STATES
+            or now < self.recovery_until
+        ):
+            self.buffered_action = (
+                state,
+                now + config.INPUT_BUFFER_MS
+            )
+            return
+
+        self._start_action(state, now)
+
+    def _consume_buffered_action(self, now):
+        if self.buffered_action is None:
+            return False
+
+        state, expires_at = self.buffered_action
+        if now > expires_at:
+            self.buffered_action = None
+            return False
+
+        if (
+            self.player_state in ACTIONABLE_STATES
+            or now < self.recovery_until
+        ):
+            return False
+
+        self._start_action(state, now)
+        return True
+
+    def handle_event(self, event):
+        if event.type != pygame.KEYDOWN or getattr(event, "repeat", False):
+            return
+
+        now = pygame.time.get_ticks()
+        if event.key == pygame.K_SPACE:
+            self._request_action('punch', now)
+            return
+        if event.key == pygame.K_a:
+            self._request_action('parry', now)
+            return
+        if event.key not in (pygame.K_LEFT, pygame.K_RIGHT):
+            return
+        if (
+            self.player_state in ACTIONABLE_STATES
+            or self.player_state in END_STATES
+            or now < self.recovery_until
+        ):
+            return
+
+        previous_tap = self.last_tap_time[event.key]
+        self.last_tap_time[event.key] = now
+        if (
+            previous_tap > 0
+            and now - previous_tap <= config.DOUBLE_TAP_WINDOW_MS
+        ):
+            direction = -1 if event.key == pygame.K_LEFT else 1
+            dash_factor = (
+                DASH_FACTOR - 0.5
+                if direction < 0
+                else DASH_FACTOR
+            )
+            self.enter_state('dash')
+            self.velocity = direction * self.speed * dash_factor
+            # A new dash requires two new presses.
+            self.last_tap_time[event.key] = 0
+
+    def handle_movement(self):
         keys = pygame.key.get_pressed()
         now = pygame.time.get_ticks()
 
@@ -46,53 +126,13 @@ class Player:
             )
             return
 
-        self.player_state = 'idle'
         direction = int(keys[pygame.K_RIGHT]) - int(keys[pygame.K_LEFT])
-        target_velocity = 0
-        
-        if keys[pygame.K_SPACE]:
-            if self.player_state != 'punch':
-                self.player_state = 'punch'
-                self.attack_resolved = False
-                # TODO: Use Player State to Fetch Assets
-                self.player_assets.get_animation('punch').reset()
-                self.recovery_until = now + config.RECOVERY_DURATIONS.get('punch', 0)
-        if keys[pygame.K_a]:
-            if self.player_state != "parry":
-                self.player_state = "parry"
-                self.player_assets.get_animation('parry').reset()
-                self.recovery_until = now + config.RECOVERY_DURATIONS.get('parry', 0)
-        if keys[pygame.K_LEFT]:
-            delta_left_tap = now - self.last_tap_time[pygame.K_LEFT]
-            if (30 < delta_left_tap < 200) and (self.player_state != 'dash'):
-                self.player_state = 'dash'
-                self.player_assets.get_animation('dash').reset()
-            else:
-                self.player_state = 'walk'
-            target_velocity = -self.speed * (
-                (DASH_FACTOR - 0.5) if self.player_state == 'dash' else 1
-            )
-            self.last_tap_time[pygame.K_LEFT] = now
-        if keys[pygame.K_RIGHT]:
-            delta_right_tap = now - self.last_tap_time[pygame.K_RIGHT]
-            if (30 < delta_right_tap < 200) and (self.player_state != 'dash'):
-                self.player_state = 'dash'
-                self.player_assets.get_animation('dash').reset()
-            else:
-                self.player_state = 'walk'
-            target_velocity = self.speed * (
-                DASH_FACTOR if self.player_state == 'dash' else 1
-            )
-            self.last_tap_time[pygame.K_RIGHT] = now
+        target_velocity = direction * self.speed
+        self.player_state = 'walk' if direction else 'idle'
 
         # Ramp toward the requested speed and ease to a stop when released.
         # Reversing gets extra acceleration so the controls remain responsive.
-        if self.player_state == 'dash':
-            # Dash becomes animation-locked after this input pass, so its
-            # burst speed must be applied immediately rather than ramped over
-            # frames that will never call handle_keys().
-            self.velocity = target_velocity
-        elif direction == 0:
+        if direction == 0:
             self.velocity = self._approach(
                 self.velocity, 0, config.PLAYER_DECELERATION
             )
@@ -137,7 +177,9 @@ class Player:
                 pass
         else:
             if not opponent_walking_in and not game_over:
-                self.handle_keys()
+                now = pygame.time.get_ticks()
+                if not self._consume_buffered_action(now):
+                    self.handle_movement()
     
         if self.player_state in ['walk', 'dash']:
             player_state_mod = self.player_state + ('_right' if self.velocity > 0 else '_left')
@@ -165,7 +207,11 @@ class Player:
         return hurtbox
 
     def get_hitbox(self) -> pygame.Rect:
-        if self.player_state == 'punch' and self.attack_resolved:
+        if self.player_state != 'punch' or self.attack_resolved:
+            return None
+        animation = self.player_assets.get_animation('punch')
+        active_start, active_end = config.PUNCH_ACTIVE_FRAMES
+        if not active_start <= animation.current_frame <= active_end:
             return None
         asset_hitbox = self.player_assets.get_hitbox(self.player_state)
         if not asset_hitbox:
@@ -177,6 +223,13 @@ class Player:
             asset_hitbox[3],
         )
         return hitbox
+
+    def is_parry_active(self) -> bool:
+        if self.player_state != 'parry':
+            return False
+        animation = self.player_assets.get_animation('parry')
+        active_start, active_end = config.PARRY_ACTIVE_FRAMES
+        return active_start <= animation.current_frame <= active_end
     
     def reset_position(self, x):
         print(f"Resetting player to server position x={x}")
@@ -212,6 +265,7 @@ class Player:
         self.last_tap_time = {pygame.K_LEFT: 0, pygame.K_RIGHT: 0}
         self._inputs = []
         self.recovery_until = 0
+        self.buffered_action = None
         self.attack_resolved = False
         self.parry_hit_registered = False
         self.queued_state = None

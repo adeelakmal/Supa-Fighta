@@ -186,7 +186,11 @@ class Opponent:
         return hurtbox
 
     def get_hitbox(self) -> pygame.Rect:
-        if self.opponent_state == 'punch' and self.attack_resolved:
+        if self.opponent_state != 'punch' or self.attack_resolved:
+            return None
+        animation = self.opponent_assets.get_animation('punch')
+        active_start, active_end = config.PUNCH_ACTIVE_FRAMES
+        if not active_start <= animation.current_frame <= active_end:
             return None
         asset_hitbox = self.opponent_assets.get_hitbox(self.opponent_state)
         if not asset_hitbox:
@@ -198,6 +202,13 @@ class Opponent:
             asset_hitbox[3],
         )
         return hitbox
+
+    def is_parry_active(self) -> bool:
+        if self.opponent_state != 'parry':
+            return False
+        animation = self.opponent_assets.get_animation('parry')
+        active_start, active_end = config.PARRY_ACTIVE_FRAMES
+        return active_start <= animation.current_frame <= active_end
     
     def set_state(self, state: str):
         self.opponent_state = state

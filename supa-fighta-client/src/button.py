@@ -7,12 +7,17 @@ class Button:
         self.default_color = font_color
         self.font_color = font_color
         self.rect = pygame.Rect(x, y, 100, 25)
-        self.text = text
+        self.text = ""
+        self.set_text(text)
         self.is_hovered = False
         self.is_selected = False
         self.shadow_color = (23, 23, 23)
         self.shadow_offset = 1
         self.sound_loader = SoundLoader.get_instance()
+
+    def set_text(self, text):
+        self.text = text
+        self.rect.width = max(100, self.font.size(text)[0] + 8)
 
     def draw(self, screen):
         shadow_surface = self.font.render(self.text, True, self.shadow_color)

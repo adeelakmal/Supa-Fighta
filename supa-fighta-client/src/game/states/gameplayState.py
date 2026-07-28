@@ -177,6 +177,20 @@ class GameplayState:
         self.opponent.moving_to_target = False
         self.opponent.target_x = None
 
+        opponent_position = server_message.get('opponentPosition')
+        if (
+            isinstance(opponent_position, (int, float))
+            and not isinstance(opponent_position, bool)
+            and math.isfinite(opponent_position)
+        ):
+            self.opponent.opponent_x = max(
+                config.PLAYER_WIDTH,
+                min(
+                    config.WINDOW_WIDTH - config.PLAYER_WIDTH,
+                    float(opponent_position)
+                )
+            )
+
         winner_id = server_message.get('winner')
         if winner_id is None:
             self.final_message = "DRAW"
@@ -430,5 +444,10 @@ class GameplayState:
         self.player._inputs.clear()
         self._last_snapshot_time = self._current_time
         
-    def handle_event(self,event):
-        pass
+    def handle_event(self, event):
+        if (
+            not self.game_over
+            and not self.is_countdown_active()
+            and not self.opponent.walking_in
+        ):
+            self.player.handle_event(event)

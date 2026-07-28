@@ -3,7 +3,6 @@ from game.opponent import Opponent
 import pygame
 
 DEBUG = True
-ACTIVE_PARRY_STATE = 'parry'
 
 class Collision:
     def check_overlap(player: Player, opponent: Opponent) -> bool:
@@ -21,7 +20,7 @@ class Collision:
        
         if player_hitbox and player_hitbox.colliderect(opponent_hurtbox):
             player.attack_resolved = True
-            if opponent.opponent_state == ACTIVE_PARRY_STATE:
+            if opponent.is_parry_active():
                 if DEBUG:
                     print("Opponent parried the attack!")
                 opponent.enter_state('parry-hit')
@@ -35,7 +34,7 @@ class Collision:
                 return True
         elif opponent_hitbox and opponent_hitbox.colliderect(player_hurtbox):
             opponent.attack_resolved = True
-            if player.player_state == ACTIVE_PARRY_STATE:
+            if player.is_parry_active():
                 if DEBUG:
                     print("Player parried the attack!")
                 player.enter_state('parry-hit')

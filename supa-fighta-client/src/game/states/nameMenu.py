@@ -93,6 +93,19 @@ class NameMenuState:
             )
             screen.blit(error_text, error_rect)
 
+        hint = input_font.render(
+            "ENTER  Save     ESC  Cancel",
+            True,
+            (235, 218, 195)
+        )
+        hint_rect = hint.get_rect(
+            center=(
+                sub_x + (sub_width // 2),
+                sub_y + sub_height - 20
+            )
+        )
+        screen.blit(hint, hint_rect)
+
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_ESCAPE:

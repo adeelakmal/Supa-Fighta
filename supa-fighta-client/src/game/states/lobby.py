@@ -12,8 +12,8 @@ class LobbyState:
 
     def __init__(self, state_manager):
         self.state_manager = state_manager
-        self.lobby_state = "Waiting for a game..."
-        self.font = pygame.font.Font(None, 18)
+        self.font = pygame.font.Font("assets/determination.ttf", 14)
+        self.small_font = pygame.font.Font("assets/determination.ttf", 9)
         self.background_sprites = SpriteSheet(
             SpriteProperties(
                 path="assets/background.png",
@@ -44,6 +44,7 @@ class LobbyState:
                 self.state_manager.show_connection_error(str(error))
         else:
             self.player.player_reset()
+            self.player.net.finish_match()
             self.send_player_rejoined()
 
     def exit(self):
@@ -77,9 +78,31 @@ class LobbyState:
     def draw(self, screen):
         self.background.draw(screen)
         self.player.draw(screen)
-        lobby_state = self.font.render(self.lobby_state, True, (255, 255, 255))
-        rect = lobby_state.get_rect(center=(config.WINDOW_WIDTH - 80, config.WINDOW_HEIGHT - 20))
+
+        dot_count = (pygame.time.get_ticks() // 450) % 4
+        lobby_state = self.font.render(
+            f"SEARCHING FOR OPPONENT{'.' * dot_count}",
+            True,
+            (255, 235, 205)
+        )
+        rect = lobby_state.get_rect(
+            center=(config.WINDOW_WIDTH // 2, 70)
+        )
         screen.blit(lobby_state, rect)
+
+        player_name = self.small_font.render(
+            f"PLAYER  {config.PLAYER_NAME}",
+            True,
+            (245, 235, 220)
+        )
+        screen.blit(player_name, (14, 13))
+
+        hint = self.small_font.render(
+            "ESC  Leave lobby",
+            True,
+            (225, 214, 199)
+        )
+        screen.blit(hint, (14, config.WINDOW_HEIGHT - 16))
 
     def handle_event(self, event):
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:

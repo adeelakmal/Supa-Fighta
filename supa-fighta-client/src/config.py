@@ -1,8 +1,17 @@
 import os
 
 # Game settings
+# Gameplay, collisions, networking, and assets use this fixed logical canvas.
+# GameDisplay scales only the completed frame to a physical window size.
 WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 360
+LOGICAL_SIZE = (WINDOW_WIDTH, WINDOW_HEIGHT)
+DISPLAY_RESOLUTIONS = (
+    (640, 360),
+    (1280, 720),
+    (1920, 1080),
+)
+DEFAULT_DISPLAY_RESOLUTION = DISPLAY_RESOLUTIONS[0]
 FPS = 60
 PLAYER_MOVE_SPEED = 3.0
 PLAYER_ACCELERATION = 0.45
@@ -162,7 +171,7 @@ MUSIC = {
 
 # WebSocket settings
 WS_URL = "wss://supa-fighta.onrender.com"
-# WS_URL = "ws://localhost:3000"
+WS_URL = "ws://localhost:3000"
 WS_CONNECT_TIMEOUT = 30
 WS_HEARTBEAT_INTERVAL = 15
 WS_HEARTBEAT_TIMEOUT = 45

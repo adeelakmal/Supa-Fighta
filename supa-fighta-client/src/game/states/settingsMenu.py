@@ -3,20 +3,32 @@ import config
 from button import Button
 from game.states.classes.baseMenu import BaseMenu
 from game.states.nameMenu import NameMenuState
+from game.states.resolutionMenu import ResolutionMenuState
 
 
 class SettingsState(BaseMenu):
 
     def __init__(self, state_manager):
         buttons = [
-            Button(15, config.WINDOW_HEIGHT - 190, "Player Name", 30),
-            Button(15, config.WINDOW_HEIGHT - 150, "Sound", 30),
-            Button(15, config.WINDOW_HEIGHT - 110, "Back", 30)
+            Button(16, config.WINDOW_HEIGHT - 190, "Player Name", 30),
+            Button(16, config.WINDOW_HEIGHT - 150, "Sound", 30),
+            Button(16, config.WINDOW_HEIGHT - 110, "Resolution", 30)
         ]
         super().__init__(state_manager, buttons)
+        self.hint_font = pygame.font.Font("assets/determination.ttf", 9)
 
     def draw(self, screen: pygame.Surface):
         super().draw(screen)
+        hint = self.hint_font.render(
+            "ESC  Back",
+            True,
+            (225, 214, 199)
+        )
+        screen.blit(
+            hint,
+            (config.WINDOW_WIDTH - hint.get_width() - 16,
+             config.WINDOW_HEIGHT - 16)
+        )
 
     def handle_event(self, event):
         super().handle_event(event)
@@ -30,8 +42,10 @@ class SettingsState(BaseMenu):
         elif text == "Sound":
             pass
 
-        elif text == "Back":
-            self._go_back()
+        elif text == "Resolution":
+            self.state_manager.push_state(
+                ResolutionMenuState(self.state_manager)
+            )
 
     def _on_escape(self):
         self._go_back()

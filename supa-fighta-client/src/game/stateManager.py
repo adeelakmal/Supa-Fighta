@@ -10,7 +10,14 @@ from type.sprite import SpriteProperties
 import config
 
 class GameState:
-    def __init__(self):
+    def __init__(
+        self,
+        game_display=None,
+        on_display_resolution_changed=None,
+    ):
+        self.game_display = game_display
+        self.on_display_resolution_changed = on_display_resolution_changed
+        self._display_resolution = config.DEFAULT_DISPLAY_RESOLUTION
         self.state_stack = []
         self.background_sprites = SpriteSheet(
             SpriteProperties(
@@ -96,6 +103,36 @@ class GameState:
         if self.state_stack:
             # only top gets input
             self.state_stack[-1].handle_event(event)
+
+    def get_display_resolution(self):
+        if self.game_display is not None:
+            return self.game_display.resolution
+        return self._display_resolution
+
+    def cycle_display_resolution(self, direction=1):
+        current_index = config.DISPLAY_RESOLUTIONS.index(
+            self.get_display_resolution()
+        )
+        next_index = (
+            current_index + direction
+        ) % len(config.DISPLAY_RESOLUTIONS)
+        return self.set_display_resolution(
+            config.DISPLAY_RESOLUTIONS[next_index]
+        )
+
+    def set_display_resolution(self, resolution):
+        resolution = tuple(resolution)
+        if resolution not in config.DISPLAY_RESOLUTIONS:
+            raise ValueError(f"Unsupported display resolution: {resolution}")
+        if self.game_display is not None:
+            applied_resolution = self.game_display.set_resolution(resolution)
+        else:
+            self._display_resolution = resolution
+            applied_resolution = self._display_resolution
+
+        if self.on_display_resolution_changed is not None:
+            self.on_display_resolution_changed(applied_resolution)
+        return applied_resolution
 
     def draw_background(self, screen):
         self.background.draw(screen)

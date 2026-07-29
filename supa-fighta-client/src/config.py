@@ -171,7 +171,7 @@ MUSIC = {
 
 # WebSocket settings
 WS_URL = "wss://supa-fighta.onrender.com"
-WS_URL = "ws://localhost:3000"
+# WS_URL = "ws://localhost:3000"
 WS_CONNECT_TIMEOUT = 30
 WS_HEARTBEAT_INTERVAL = 15
 WS_HEARTBEAT_TIMEOUT = 45

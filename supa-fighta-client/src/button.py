@@ -2,9 +2,19 @@ import pygame
 from sound_loader import SoundLoader
 
 class Button:
-    def __init__(self, x, y, text, font_size=30, font_color=(216, 138, 97)):
-        self.font = pygame.font.Font("assets/RamadhanMubarok.otf", font_size)
+    def __init__(
+        self,
+        x,
+        y,
+        text,
+        font_size=30,
+        font_color=(216, 138, 97),
+        font_path="assets/RamadhanMubarok.otf",
+        highlight_color=(244, 186, 98),
+    ):
+        self.font = pygame.font.Font(font_path, font_size)
         self.default_color = font_color
+        self.highlight_color = highlight_color
         self.font_color = font_color
         self.rect = pygame.Rect(x, y, 100, 25)
         self.text = ""
@@ -32,10 +42,11 @@ class Button:
         if event.type == pygame.MOUSEMOTION:
             self.is_hovered = self.rect.collidepoint(event.pos)
             if self.is_hovered:
-                self.font_color = (244, 186, 98)
+                self.font_color = self.highlight_color
             elif not self.is_selected:
                 self.font_color = self.default_color
         elif event.type == pygame.MOUSEBUTTONDOWN:
+            self.is_hovered = self.rect.collidepoint(event.pos)
             if self.is_hovered and event.button == 1:
                 return self.text
         return None
@@ -45,7 +56,9 @@ class Button:
         if self.is_selected == selected:
             return
         self.is_selected = selected
-        self.font_color = (244, 186, 98) if selected else self.default_color
+        self.font_color = (
+            self.highlight_color if selected else self.default_color
+        )
         if selected:
             try:
                 self.sound_loader.get_sound("button_hover").play()

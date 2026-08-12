@@ -1,8 +1,17 @@
 import os
 
 # Game settings
+# Gameplay, collisions, networking, and assets use this fixed logical canvas.
+# GameDisplay scales only the completed frame to a physical window size.
 WINDOW_WIDTH = 640
 WINDOW_HEIGHT = 360
+LOGICAL_SIZE = (WINDOW_WIDTH, WINDOW_HEIGHT)
+DISPLAY_RESOLUTIONS = (
+    (640, 360),
+    (1280, 720),
+    (1920, 1080),
+)
+DEFAULT_DISPLAY_RESOLUTION = DISPLAY_RESOLUTIONS[0]
 FPS = 60
 PLAYER_MOVE_SPEED = 3.0
 PLAYER_ACCELERATION = 0.45

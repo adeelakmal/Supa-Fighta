@@ -64,6 +64,18 @@ SDL_AUDIODRIVER=dummy python src/main.py
 
 *Note: Controller support will be added in a future update.*
 
+## Display resolutions and pixel art
+
+The Settings menu supports 640x360, 1280x720, and 1920x1080. Gameplay,
+collisions, networking, and asset layout always use a 640x360 logical canvas;
+only the finished frame is scaled for display. The 2x and 3x modes use
+nearest-neighbor scaling so pixel edges stay sharp.
+
+Keep one canonical set of sprite sheets at their current resolution. Separate
+720p and 1080p asset folders, or manually enlarging the same pixels in Aseprite,
+would produce the same image while increasing file size and maintenance work.
+Create a higher-resolution variant only when it contains newly drawn detail.
+
 ## Technologies Used
 
 - **Client**: [Pygame](https://www.pygame.org/) - Python-based game development library

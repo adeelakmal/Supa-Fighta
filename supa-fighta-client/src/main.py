@@ -1,15 +1,17 @@
 import pygame, sys, config, argparse
 from game.stateManager import GameState
+from game_display import GameDisplay
 from player_manager import load_player_id
+from settings_store import load_display_resolution, save_display_resolution
 
 def main(PlayerDataFile="player_data.dat"):
     pygame.init()
     config.PLAYER_DATA_FILE = PlayerDataFile
     config.PLAYER_ID = load_player_id(PlayerDataFile)
-    screen = pygame.display.set_mode((config.WINDOW_WIDTH, config.WINDOW_HEIGHT))
+    game_display = GameDisplay(load_display_resolution())
     pygame.display.set_caption("Supa Fighta")
     clock = pygame.time.Clock() 
-    gameState = GameState()
+    gameState = GameState(game_display, save_display_resolution)
     ws_client = None
    
     try:
@@ -21,12 +23,14 @@ def main(PlayerDataFile="player_data.dat"):
                 if event.type == pygame.QUIT:
                     running = False
                 else:
-                    gameState.handle_event(event)
+                    gameState.handle_event(
+                        game_display.to_logical_event(event)
+                    )
 
             gameState.update()
-            gameState.draw(screen)
-
-            pygame.display.flip()
+            game_display.logical_surface.fill(config.BACKGROUND_COLOR)
+            gameState.draw(game_display.logical_surface)
+            game_display.present()
     except Exception as e:
         print(f"An error occurred: {e}")
         

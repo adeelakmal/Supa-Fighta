@@ -9,6 +9,7 @@ import config
 import math
 import pygame
 import time
+from player_name import get_match_display_names
 
 SNAPSHOT_INTERVAL = 1 / 60
 FIGHT_MESSAGE_SECONDS = 0.7
@@ -33,8 +34,10 @@ class GameplayState:
         self.running = True
         self.player = player
         self.state_manager = state_manager
-        self.player_name = player_name
-        self.opponent_name = opponent_name
+        self.player_name, self.opponent_name = get_match_display_names(
+            player_name,
+            opponent_name
+        )
         self.countdown_seconds = max(0.0, countdown_seconds)
         self.match_duration_seconds = max(1.0, match_duration_seconds)
         self.countdown_end_time = None

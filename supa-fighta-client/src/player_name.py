@@ -29,3 +29,16 @@ def validate_player_name(username):
         return None, "That name is reserved."
 
     return name, None
+
+
+def get_match_display_names(player_name, opponent_name):
+    """Return clear in-match labels without changing either saved name."""
+    opponent_display_name = opponent_name
+    if (
+        isinstance(player_name, str)
+        and isinstance(opponent_name, str)
+        and player_name.casefold() == opponent_name.casefold()
+    ):
+        opponent_display_name = f"{opponent_name} (2)"
+
+    return "You", opponent_display_name

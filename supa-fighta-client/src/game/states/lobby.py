@@ -91,7 +91,7 @@ class LobbyState:
         screen.blit(lobby_state, rect)
 
         player_name = self.small_font.render(
-            f"PLAYER  {config.PLAYER_NAME}",
+            f"YOU  {config.PLAYER_NAME}",
             True,
             (245, 235, 220)
         )

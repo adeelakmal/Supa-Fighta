@@ -1,14 +1,13 @@
 import pygame
-import config
 from button import Button
 from game.states.classes.baseMenu import BaseMenu
 
 class MainMenuState(BaseMenu):
     def __init__(self, state_manager):
         buttons = [
-            Button(22, config.WINDOW_HEIGHT - 190, "Join Lobby"),
-            Button(22, config.WINDOW_HEIGHT - 150, "Settings"),
-            Button(25, config.WINDOW_HEIGHT - 110, "Exit")
+            Button(22, 165, "Join Lobby", 28),
+            Button(22, 205, "Settings", 28),
+            Button(25, 245, "Exit", 28)
         ]
         super().__init__(state_manager, buttons)
 

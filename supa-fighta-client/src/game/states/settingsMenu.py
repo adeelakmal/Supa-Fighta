@@ -18,6 +18,12 @@ class SettingsState(BaseMenu):
         self.hint_font = pygame.font.Font("assets/determination.ttf", 9)
 
     def draw(self, screen: pygame.Surface):
+        sound_button = next(
+            button
+            for button in self.buttons
+            if button.text.startswith("Sound")
+        )
+        sound_button.set_text(self.sound_loader.get_status_text())
         super().draw(screen)
         hint = self.hint_font.render(
             "ESC  Back",
@@ -39,8 +45,8 @@ class SettingsState(BaseMenu):
         if text == "Player Name":
             self.state_manager.push_state(NameMenuState(self.state_manager))
 
-        elif text == "Sound":
-            pass
+        elif text.startswith("Sound"):
+            self.sound_loader.toggle_mute()
 
         elif text == "Resolution":
             self.state_manager.push_state(

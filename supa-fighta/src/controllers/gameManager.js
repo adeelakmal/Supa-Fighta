@@ -16,15 +16,24 @@ class GameManager {
         return game.start() ? game : null;
     }
 
-    routeInput(lobby, playerId, snapshot) {
+    routeInput(lobby, playerId, matchId, snapshot) {
         const player = lobby.players.find(p =>  p.id === playerId);
-        if (!player || player.match_id === null) return;
+        if (
+            !player
+            || player.match_id === null
+            || matchId !== player.match_id
+        ) return;
 
         const game = this.activeGames.find(g => g.matchId === player.match_id);
         if (!game || game.status === 1) return; // Game has ended, ignore inputs
-        if (game) {
-            game.validateState(playerId, snapshot);
-        }
+        game.validateState(playerId, snapshot);
+    }
+
+    hasActiveGameForPlayer(playerId) {
+        return this.activeGames.some(game =>
+            game.status !== 1
+            && (game.player1.id === playerId || game.player2.id === playerId)
+        );
     }
 
     async handleDisconnect(playerId) {

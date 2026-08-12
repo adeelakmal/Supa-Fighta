@@ -5,10 +5,13 @@ const { Inputs } = require('../enums');
 const WebSocket = require('ws');
 const DASH_FACTOR = 2.1
 const MOVE_SPEED = 3;
-const ACCELERATION = 0.45;
-const DECELERATION = 0.65;
 const MAX_FRAME_SPEED = MOVE_SPEED * DASH_FACTOR;
 const POSITION_EPSILON = 2;
+// The client runs at 60 FPS and the punch animation at 25 FPS. These inputs
+// line up with animation frames 3-5, where the fist is visibly extended.
+const PUNCH_ACTIVE_INPUT_START = 10;
+const PUNCH_ACTIVE_INPUT_END = 18;
+const PARRY_ACTIVE_INPUT_END = 15;
 const MATCH_DURATION_SECONDS = 20;
 const INTRO_COUNTDOWN_SECONDS = 3;
 
@@ -48,11 +51,18 @@ class Game {
         this.startsAt = null;
         this.acceptingInput = false;
         this.onEnd = onEnd;
-        this.moveStep = MOVE_SPEED;
         this.parryLocks = new Set();
         this.attackResolved = {
             [player1.id]: false,
             [player2.id]: false
+        };
+        this.attackProgress = {
+            [player1.id]: 0,
+            [player2.id]: 0
+        };
+        this.parryProgress = {
+            [player1.id]: 0,
+            [player2.id]: 0
         };
 
     }
@@ -62,6 +72,7 @@ class Game {
         this.startsAt = Date.now() + (this.countdownSeconds * 1000);
         const startMessage = {
             type: 'game_start',
+            matchId: this.matchId,
             countdownSeconds: this.countdownSeconds,
             matchDurationSeconds: this.durationSeconds,
             startsAt: this.startsAt
@@ -116,53 +127,51 @@ class Game {
     processInput(playerId, input) {
         const otherId = playerId === this.player1.id ? this.player2.id : this.player1.id;
         const pos = this.positions[playerId];
-        let otherPos = this.positions[otherId];
-        let reversedOtherPos = this.reversePosition(otherPos);
+        const otherPos = this.positions[otherId];
+        const reversedOtherPos = this.reversePosition(otherPos);
         let player = this.player1.id === playerId ? this.player1 : this.player2;
         const parryLockKey = `${playerId}:${otherId}`;
-        // console.log(`Reversed opponent position for processing:`, otherPos);
 
         if (input !== 'punch') {
             this.parryLocks.delete(parryLockKey);
             this.attackResolved[playerId] = false;
+            this.attackProgress[playerId] = 0;
+        }
+        if (input !== 'parry') {
+            this.parryProgress[playerId] = 0;
         }
 
         switch (input) {
             case 'idle':
                 player.state = 'idle'
-                pos.velocity = this.approach(pos.velocity, 0, DECELERATION);
-                this.movePlayer(pos, reversedOtherPos, otherPos);
                 break;
             case 'walk_left':
-                player.state = input;
-                pos.velocity = this.accelerate(pos.velocity, -this.moveStep);
-                this.movePlayer(pos, reversedOtherPos, otherPos);
-                break;
             case 'walk_right':
-                player.state = input;
-                pos.velocity = this.accelerate(pos.velocity, this.moveStep);
-                this.movePlayer(pos, reversedOtherPos, otherPos);
-                break;
             case 'dash_left':
-                player.state = input;
-                pos.velocity = -this.moveStep * (DASH_FACTOR - 0.5);
-                this.movePlayer(pos, reversedOtherPos, otherPos);
-                break;
             case 'dash_right':
                 player.state = input;
-                pos.velocity = this.moveStep * DASH_FACTOR;
-                this.movePlayer(pos, reversedOtherPos, otherPos);
                 break;
             case 'punch':
-                this.movePlayer(pos, reversedOtherPos, otherPos);
+                player.state = 'punch';
+                this.attackProgress[playerId]++;
                 if (this.attackResolved[playerId]) {
                     break;
                 }
-                player.state = 'punch';
+                if (
+                    this.attackProgress[playerId] < PUNCH_ACTIVE_INPUT_START
+                    || this.attackProgress[playerId] > PUNCH_ACTIVE_INPUT_END
+                ) {
+                    break;
+                }
                 if(pos.x+80+30 > reversedOtherPos.x) {
                     this.attackResolved[playerId] = true;
                     let otherPlayer = this.player1.id === otherId ? this.player1 : this.player2;
-                    if (otherPlayer.state == Inputs.PARRY){
+                    const parryIsActive = (
+                        otherPlayer.state === Inputs.PARRY
+                        && this.parryProgress[otherId] > 0
+                        && this.parryProgress[otherId] <= PARRY_ACTIVE_INPUT_END
+                    );
+                    if (parryIsActive){
                         if (!this.parryLocks.has(parryLockKey)) {
                             console.log(`Player ${otherId} parried Player ${playerId}`);
                             this.parryLocks.add(parryLockKey);
@@ -178,53 +187,17 @@ class Game {
                 }
                 break;
             case 'parry':
-                this.movePlayer(pos, reversedOtherPos, otherPos);
                 player.state = Inputs.PARRY
+                this.parryProgress[playerId]++;
                 break;
             case 'parry-hit':
             case 'parried':
-                this.movePlayer(pos, reversedOtherPos, otherPos);
                 player.state = input;
                 break;
             default:
                 // console.log("Unknown input:", input);
                 break;
         }
-    }
-
-    approach(current, target, amount) {
-        if (current < target) return Math.min(current + amount, target);
-        if (current > target) return Math.max(current - amount, target);
-        return target;
-    }
-
-    accelerate(current, target) {
-        const reversing = current !== 0 && Math.sign(current) !== Math.sign(target);
-        return this.approach(
-            current,
-            target,
-            ACCELERATION + (reversing ? DECELERATION : 0)
-        );
-    }
-
-    movePlayer(pos, reversedOtherPos, otherPos) {
-        const nextX = pos.x + pos.velocity;
-        if (pos.velocity <= 0) {
-            pos.x = Math.max(0, nextX);
-            return;
-        }
-
-        const rightEdge = 640 - (80 * 2);
-        if (nextX <= reversedOtherPos.x - 80) {
-            pos.x = Math.min(rightEdge, nextX);
-            return;
-        }
-
-        // Match the client's reduced pushing speed while keeping both server
-        // positions separated.
-        pos.x = Math.min(rightEdge, pos.x + Math.min(pos.velocity, MOVE_SPEED / 2));
-        reversedOtherPos.x = Math.min(640 - 80, pos.x + 80);
-        otherPos.x = this.reversePosition(reversedOtherPos).x;
     }
 
     reversePosition(position) {
@@ -270,17 +243,11 @@ class Game {
     validateState(playerId, snapshot) {
         if (!this.acceptingInput || this.status === 1) return;
 
-        const player_state  = snapshot.player;
-        const { history, state} = player_state;
-        let x = player_state.x;
+        const playerState = snapshot.player;
+        const { history } = playerState;
+        const x = playerState.x;
         const serverPos = this.positions[playerId];
         const previousAcceptedX = this.lastAcceptedPositions[playerId];
-        history.forEach((input, index) => {
-            if (this.status!=1) {
-                this.processInput(playerId, input); 
-            }
-            
-        })
         const maxSnapshotTravel = (
             history.length * MAX_FRAME_SPEED
         ) + POSITION_EPSILON;
@@ -295,9 +262,11 @@ class Game {
             const target = playerId === this.player1.id ? this.player1 : this.player2;
             this.sendToPlayer(target, {
                 type: 'correction',
+                matchId: this.matchId,
                 position: previousAcceptedX
             });
             serverPos.x = previousAcceptedX;
+            return;
         } else {
             // Input labels are still processed for combat and state, but the
             // validated client position is the reconciliation point. Trying
@@ -306,7 +275,15 @@ class Game {
             serverPos.x = x;
             this.lastAcceptedPositions[playerId] = x;
         }
-        // console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
+
+        for (const input of history) {
+            if (this.status === 1) break;
+            this.processInput(playerId, input);
+        }
+
+        // end() already sent the terminal event. Do not send a late update
+        // that could be buffered and replayed in the next match.
+        if (this.status === 1) return;
 
         // send response to opponent
         let pos = this.reversePosition(serverPos);
@@ -314,6 +291,7 @@ class Game {
         let op_state = this.reverseState(player.state || history[history.length - 1]);
         let message = {
             type: 'opponent_update',
+            matchId: this.matchId,
             position: pos,
             current_state: op_state
         };
@@ -345,11 +323,22 @@ class Game {
         // Notify players that the game has ended
         const message = {
             type: 'game_end',
+            matchId: this.matchId,
             winner: winner ? winner.id : null,
             reason
         };
-        this.sendToPlayer(this.player1, message);
-        this.sendToPlayer(this.player2, message);
+        this.sendToPlayer(this.player1, {
+            ...message,
+            opponentPosition: this.reversePosition(
+                this.positions[this.player2.id]
+            ).x
+        });
+        this.sendToPlayer(this.player2, {
+            ...message,
+            opponentPosition: this.reversePosition(
+                this.positions[this.player1.id]
+            ).x
+        });
 
         if (this.onEnd) {
             this.onEnd(this);

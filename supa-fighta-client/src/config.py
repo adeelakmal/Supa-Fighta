@@ -22,7 +22,7 @@ PLAYER_WIDTH = 80
 BACKGROUND_COLOR = (255, 255, 255)
 DEBUG = False
 
-# Sprites 
+# Sprites
 SPRITES = {
     "idle": {
         "path": "assets/Idel.png",
@@ -141,6 +141,10 @@ RECOVERY_DURATIONS = {
     'punch': 500,
     'parry': 450
 }
+DOUBLE_TAP_WINDOW_MS = 220
+INPUT_BUFFER_MS = 120
+PUNCH_ACTIVE_FRAMES = (3, 5)
+PARRY_ACTIVE_FRAMES = (0, 2)
 
 # SOUND EFFECTS
 SOUND = {
@@ -165,13 +169,13 @@ SOUND = {
 
 # BACKGROUND MUSIC
 MUSIC = {
-    "menu" : "assets/menu_music.wav", 
+    "menu" : "assets/menu_music.wav",
     "fight" : "assets/fight_music.wav"
 }
 
 # WebSocket settings
 WS_URL = "wss://supa-fighta.onrender.com"
-# WS_URL = "ws://localhost:3000"
+#WS_URL = "ws://localhost:3000"
 WS_CONNECT_TIMEOUT = 30
 WS_HEARTBEAT_INTERVAL = 15
 WS_HEARTBEAT_TIMEOUT = 45

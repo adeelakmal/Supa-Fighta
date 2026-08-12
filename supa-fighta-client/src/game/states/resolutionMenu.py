@@ -11,7 +11,7 @@ class ResolutionMenuState(BaseMenu):
     PRESET_SPACING = 24
     PRESET_BUTTON_SIZE = (240, 24)
     TITLE_FONT_SIZE = 40
-    TITLE_CENTER_Y_OFFSET = 36
+    TITLE_CENTER_Y_OFFSET = 34
 
     def __init__(self, state_manager):
         self.sub_menu_bg = pygame.image.load(

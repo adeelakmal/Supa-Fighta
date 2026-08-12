@@ -9,6 +9,7 @@ import config
 import math
 import pygame
 import time
+from player_name import get_match_display_names
 
 SNAPSHOT_INTERVAL = 1 / 60
 FIGHT_MESSAGE_SECONDS = 0.7
@@ -33,8 +34,10 @@ class GameplayState:
         self.running = True
         self.player = player
         self.state_manager = state_manager
-        self.player_name = player_name
-        self.opponent_name = opponent_name
+        self.player_name, self.opponent_name = get_match_display_names(
+            player_name,
+            opponent_name
+        )
         self.countdown_seconds = max(0.0, countdown_seconds)
         self.match_duration_seconds = max(1.0, match_duration_seconds)
         self.countdown_end_time = None
@@ -176,6 +179,20 @@ class GameplayState:
         self.opponent.walking_in = False
         self.opponent.moving_to_target = False
         self.opponent.target_x = None
+
+        opponent_position = server_message.get('opponentPosition')
+        if (
+            isinstance(opponent_position, (int, float))
+            and not isinstance(opponent_position, bool)
+            and math.isfinite(opponent_position)
+        ):
+            self.opponent.opponent_x = max(
+                config.PLAYER_WIDTH,
+                min(
+                    config.WINDOW_WIDTH - config.PLAYER_WIDTH,
+                    float(opponent_position)
+                )
+            )
 
         winner_id = server_message.get('winner')
         if winner_id is None:
@@ -430,5 +447,10 @@ class GameplayState:
         self.player._inputs.clear()
         self._last_snapshot_time = self._current_time
         
-    def handle_event(self,event):
-        pass
+    def handle_event(self, event):
+        if (
+            not self.game_over
+            and not self.is_countdown_active()
+            and not self.opponent.walking_in
+        ):
+            self.player.handle_event(event)

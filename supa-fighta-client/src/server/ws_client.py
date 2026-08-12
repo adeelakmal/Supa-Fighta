@@ -7,6 +7,15 @@ import math
 import config
 from player_manager import save_player_id
 
+COMBAT_STATES = {
+    'punch',
+    'parry',
+    'parry-hit',
+    'parried',
+    'dash_left',
+    'dash_right'
+}
+
 class WSClient:
     """
     Very small wrapper around a persistent websocket connection.
@@ -38,6 +47,8 @@ class WSClient:
         self._response = None
         self.last_opponent_update = None
         self.last_player_correction = None
+        self._active_match_id = None
+        self._gameplay_lock = threading.Lock()
         self._match_created_message = None
         self._match_created_lock = threading.Lock()
         self._game_end_message = None
@@ -77,9 +88,18 @@ class WSClient:
             return False
     
     def send_snapshot(self, snapshot: dict):
+        with self._gameplay_lock:
+            match_id = self._active_match_id
+        if match_id is None:
+            return False
+
         self._response_event.clear()
         self._response = None
-        self.send({"type": "snapshot", "playerId": config.PLAYER_ID, "snapshot": snapshot})
+        return self.send({
+            "type": "snapshot",
+            "matchId": match_id,
+            "snapshot": snapshot
+        })
 
     def get_last_response(self):
         return self._response
@@ -109,14 +129,25 @@ class WSClient:
             return self._connection_error
     
     def get_last_opponent_update(self):
-        update = self.last_opponent_update
-        self.last_opponent_update = None
-        return update
+        with self._gameplay_lock:
+            update = self.last_opponent_update
+            self.last_opponent_update = None
+            return update
     
     def get_last_player_correction(self):
-        correction = self.last_player_correction
-        self.last_player_correction = None
-        return correction
+        with self._gameplay_lock:
+            correction = self.last_player_correction
+            self.last_player_correction = None
+            return correction
+
+    def finish_match(self):
+        """Drop gameplay data that must not leak into the next match."""
+        with self._gameplay_lock:
+            self._active_match_id = None
+            self.last_opponent_update = None
+            self.last_player_correction = None
+        with self._game_end_lock:
+            self._game_end_message = None
 
     def close(self):
         """Close the WebSocket connection gracefully."""
@@ -196,6 +227,24 @@ class WSClient:
 
         return float(value)
 
+    def _is_current_match(self, data):
+        with self._gameplay_lock:
+            return (
+                self._active_match_id is not None
+                and data.get('matchId') == self._active_match_id
+            )
+
+    def _begin_match(self, match_id):
+        if match_id is None:
+            return
+
+        with self._gameplay_lock:
+            self._active_match_id = match_id
+            self.last_opponent_update = None
+            self.last_player_correction = None
+        with self._game_end_lock:
+            self._game_end_message = None
+
     def _handle_server_message(self, data):
         self._record_server_activity()
         self._response = data
@@ -203,11 +252,19 @@ class WSClient:
 
         message_type = data.get('type')
         if message_type == 'match_created':
-            # Keep this safe so a normal update cannot replace it.
-            with self._match_created_lock:
-                self._match_created_message = data
+            is_own_match = (
+                data.get('player1') == config.PLAYER_ID
+                or data.get('player2') == config.PLAYER_ID
+            )
+            if is_own_match:
+                self._begin_match(data.get('matchId'))
+                # Keep this safe so a normal update cannot replace it.
+                with self._match_created_lock:
+                    self._match_created_message = data
 
         if message_type == 'game_end':
+            if not self._is_current_match(data):
+                return True
             with self._game_end_lock:
                 self._game_end_message = data
 
@@ -243,6 +300,8 @@ class WSClient:
                 config.PLAYER_NAME_WAS_EDITED = False
 
         if message_type == 'opponent_update':
+            if not self._is_current_match(data):
+                return True
             position = data.get('position')
             x_position = position.get('x') if isinstance(position, dict) else None
             x_position = self._validated_position(
@@ -253,19 +312,36 @@ class WSClient:
             if x_position is not None:
                 safe_position = dict(position)
                 safe_position['x'] = x_position
-                self.last_opponent_update = {
+                next_update = {
                     **data,
                     'position': safe_position
                 }
+                with self._gameplay_lock:
+                    buffered_state = (
+                        self.last_opponent_update or {}
+                    ).get('current_state')
+                    next_state = next_update.get('current_state')
+                    if (
+                        buffered_state in COMBAT_STATES
+                        and next_state not in COMBAT_STATES
+                    ):
+                        # Keep the short combat animation, but use the newest
+                        # authoritative position.
+                        self.last_opponent_update['position'] = safe_position
+                    else:
+                        self.last_opponent_update = next_update
 
         if message_type == 'correction':
+            if not self._is_current_match(data):
+                return True
             correction = self._validated_position(
                 data.get('position'),
                 "player correction",
                 config.WINDOW_WIDTH - (config.PLAYER_WIDTH * 2)
             )
             if correction is not None:
-                self.last_player_correction = correction
+                with self._gameplay_lock:
+                    self.last_player_correction = correction
                 print(f"Received position correction from server: {correction}")
 
         return True

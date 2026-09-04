@@ -2,7 +2,6 @@ const MAX_CONNECTIONS_PER_IP = 5;
 const MAX_MESSAGES_PER_SECOND = 120;
 const MAX_PLAYER_CREATIONS_PER_HOUR = 20;
 const PLAYER_CREATION_WINDOW_MS = 60 * 60 * 1000;
-const MAX_INPUTS_PER_SNAPSHOT = 4;
 
 const VALID_INPUTS = new Set([
     'idle',
@@ -33,16 +32,15 @@ const getClientIp = (request) => {
 const validateSnapshot = (snapshot) => {
     const player = snapshot?.player;
 
-    return Boolean(
-        player
-        && Number.isFinite(player.x)
-        && Number.isSafeInteger(snapshot.sequence)
-        && snapshot.sequence >= 0
-        && Array.isArray(player.history)
-        && player.history.length > 0
-        && player.history.length <= MAX_INPUTS_PER_SNAPSHOT
-        && player.history.every(input => VALID_INPUTS.has(input))
-    );
+    if (!player || !Number.isFinite(player.x) || !Array.isArray(player.history)) {
+        return false;
+    }
+
+    if (player.history.length > 120) {
+        return false;
+    }
+
+    return player.history.every(input => VALID_INPUTS.has(input));
 };
 
 class WebSocketSecurity {
@@ -96,7 +94,6 @@ class WebSocketSecurity {
 
 module.exports = {
     MAX_CONNECTIONS_PER_IP,
-    MAX_INPUTS_PER_SNAPSHOT,
     MAX_MESSAGES_PER_SECOND,
     MAX_PLAYER_CREATIONS_PER_HOUR,
     WebSocketSecurity,

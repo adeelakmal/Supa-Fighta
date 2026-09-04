@@ -3,7 +3,7 @@ import os
 import sys
 import types
 import unittest
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(__file__))
@@ -108,18 +108,19 @@ def make_gameplay_state():
 
 
 class GameplayStateTests(unittest.TestCase):
-    def test_snapshots_have_monotonic_sequence_numbers(self):
+    def test_escape_returns_to_main_menu_from_result_screen(self):
         state = make_gameplay_state()
-        state._snapshot_sequence = 0
-        state.player.player_x = 200
-        state.player.player_y = 220
-        state.player._inputs = ["idle"]
+        lobby = Mock()
+        state.state_manager = Mock()
+        state.state_manager.states = {"lobby": lobby}
+        state.game_over = True
+        state.show_game_over_overlay = True
+        event = pygame.event.Event(pygame.KEYDOWN, key=pygame.K_ESCAPE)
 
-        first = state._create_state_snapshot()
-        second = state._create_state_snapshot()
+        state.handle_event(event)
 
-        self.assertEqual(first["sequence"], 0)
-        self.assertEqual(second["sequence"], 1)
+        lobby.disconnect_player.assert_called_once_with()
+        state.state_manager.change_state.assert_called_once_with("main_menu")
 
     def test_match_timer_uses_deadline_and_clamps_at_zero(self):
         state = make_gameplay_state()

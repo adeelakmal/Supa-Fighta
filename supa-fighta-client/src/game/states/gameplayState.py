@@ -45,6 +45,7 @@ class GameplayState:
         self.match_timer_font = pygame.font.Font(GAME_FONT_PATH, 42)
         self.game_over_message_font = pygame.font.Font(GAME_FONT_PATH, 42)
         self.game_over_countdown_font = pygame.font.Font(GAME_FONT_PATH, 16)
+        self.game_over_hint_font = pygame.font.Font(GAME_FONT_PATH, 9)
         self.player_name_font = pygame.font.Font(GAME_FONT_PATH, 14)
         # self.net = WSClient(config.WS_URL)
         if player is None: # for testing purposes
@@ -61,7 +62,6 @@ class GameplayState:
         )
         self.background = Animator(self.background_sprites, 10)
         self._last_snapshot_time = time.time()
-        self._snapshot_sequence = 0
         self._current_time = time.time()
         self._last_sent_player_state = None
         self.game_over = False
@@ -280,6 +280,17 @@ class GameplayState:
         )
         surface.blit(countdown, countdown_rect)
 
+        hint = self.game_over_hint_font.render(
+            "ESC  Back",
+            True,
+            (225, 214, 199)
+        )
+        surface.blit(
+            hint,
+            (config.WINDOW_WIDTH - hint.get_width() - 16,
+             config.WINDOW_HEIGHT - 16)
+        )
+
     def get_match_seconds_left(self, now=None):
         if self._frozen_match_seconds is not None:
             return self._frozen_match_seconds
@@ -416,7 +427,6 @@ class GameplayState:
 
     def _create_state_snapshot(self):
         snapshot = {
-            "sequence": self._snapshot_sequence,
             "timestamp": time.time(),
             "player": {
                 "x": self.player.player_x,
@@ -425,7 +435,6 @@ class GameplayState:
                 "state": getattr(self.player, "player_state", "idle")
             }
         }
-        self._snapshot_sequence += 1
         return snapshot
     
     def _cleanup(self):
@@ -433,5 +442,12 @@ class GameplayState:
         self.player._inputs.clear()
         self._last_snapshot_time = self._current_time
         
-    def handle_event(self,event):
-        pass
+    def handle_event(self, event):
+        if (
+            self.game_over
+            and self.show_game_over_overlay
+            and event.type == pygame.KEYDOWN
+            and event.key == pygame.K_ESCAPE
+        ):
+            self.state_manager.states["lobby"].disconnect_player()
+            self.state_manager.change_state("main_menu")

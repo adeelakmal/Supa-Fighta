@@ -2,14 +2,17 @@ class PlayerRepository {
     constructor (pool){
         this.pool = pool
     }
-    async getPlayerById (id){
-        return await this.pool.query('SELECT * FROM players WHERE player_id = $1', [id]);
-    }
-    async addNewPlayer(player){
+    async getPlayerByCredentials (id, authTokenHash){
         return await this.pool.query(`
-            INSERT INTO players (player_id, player_name, status)
-            VALUES ($1, $2, 0)
-        `, [player.id, player.username]);
+            SELECT * FROM players
+            WHERE player_id = $1 AND auth_token_hash = $2
+        `, [id, authTokenHash]);
+    }
+    async addNewPlayer(player, authTokenHash){
+        return await this.pool.query(`
+            INSERT INTO players (player_id, player_name, status, auth_token_hash)
+            VALUES ($1, $2, 0, $3)
+        `, [player.id, player.username, authTokenHash]);
     }
 
     async updatePlayerName(playerId, username){

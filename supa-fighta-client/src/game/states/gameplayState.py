@@ -61,6 +61,7 @@ class GameplayState:
         )
         self.background = Animator(self.background_sprites, 10)
         self._last_snapshot_time = time.time()
+        self._snapshot_sequence = 0
         self._current_time = time.time()
         self._last_sent_player_state = None
         self.game_over = False
@@ -415,6 +416,7 @@ class GameplayState:
 
     def _create_state_snapshot(self):
         snapshot = {
+            "sequence": self._snapshot_sequence,
             "timestamp": time.time(),
             "player": {
                 "x": self.player.player_x,
@@ -423,6 +425,7 @@ class GameplayState:
                 "state": getattr(self.player, "player_state", "idle")
             }
         }
+        self._snapshot_sequence += 1
         return snapshot
     
     def _cleanup(self):

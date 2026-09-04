@@ -16,7 +16,7 @@
     "express": "^5.1.0",
     "obscenity": "^0.4.6",
     "pg": "^8.15.6",
-    "ws": "^8.18.1"
+    "ws": "^8.21.3"
   },
   "devDependencies": {
     "eslint": "^9.25.1",

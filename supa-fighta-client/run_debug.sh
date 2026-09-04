@@ -5,6 +5,9 @@ set -a
 source ../supa-fighta/.env
 set +a
 
+# Point debug clients at the local server using the same configured port.
+export SUPA_FIGHTA_WS_URL="ws://localhost:${PORT:-8080}"
+
 # Run the Node.js server
 echo "Starting Node.js server..."
 node ../supa-fighta/src/server.js & NODE_PID=$!
@@ -13,8 +16,8 @@ sleep 1
 
 # Run the Python client
 echo "Starting Python client..."
-.././venv/Scripts/python.exe src/main.py --datafile player_data.dat & PY_PID1=$!
-.././venv/Scripts/python.exe src/main.py --datafile player_data2.dat & PY_PID2=$!
+.././venv/Scripts/python.exe src/main.py --datafile player_credentials.json & PY_PID1=$!
+.././venv/Scripts/python.exe src/main.py --datafile player_credentials2.json & PY_PID2=$!
 
 # Wait for the Python client to finish
 wait $PY_PID1

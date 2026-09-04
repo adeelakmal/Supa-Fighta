@@ -5,7 +5,7 @@ import asyncio
 import time
 import math
 import config
-from player_manager import save_player_id
+from player_manager import clear_player_credentials, save_player_credentials
 
 class WSClient:
     """
@@ -52,10 +52,11 @@ class WSClient:
             daemon=True
         )
         self._heartbeat_thread.start()
-        if config.PLAYER_ID:
+        if config.PLAYER_ID and config.PLAYER_TOKEN:
             validation_message = {
                 "type": "validate_player",
-                "playerId": config.PLAYER_ID
+                "playerId": config.PLAYER_ID,
+                "playerToken": config.PLAYER_TOKEN,
             }
             if config.PLAYER_NAME_WAS_EDITED:
                 validation_message["username"] = config.PLAYER_NAME
@@ -226,7 +227,8 @@ class WSClient:
         if message_type == 'validation_result' and data.get('valid') is False:
             # Old saves happen sometimes, so make a fresh player and keep going.
             config.PLAYER_ID = None
-            save_player_id(None, config.PLAYER_DATA_FILE)
+            config.PLAYER_TOKEN = None
+            clear_player_credentials(config.PLAYER_DATA_FILE)
             self._create_player()
 
         if message_type == 'validation_result' and data.get('valid') is True:
@@ -235,10 +237,15 @@ class WSClient:
 
         if message_type == 'player_created':
             player_id = data.get('playerId')
-            if player_id:
-                save_player_id(player_id, config.PLAYER_DATA_FILE)
+            player_token = data.get('playerToken')
+            if save_player_credentials(
+                player_id,
+                player_token,
+                config.PLAYER_DATA_FILE,
+            ):
                 print(f"New player ID saved: {player_id}")
                 config.PLAYER_ID = player_id
+                config.PLAYER_TOKEN = player_token
                 config.PLAYER_NAME = data.get('username', config.PLAYER_NAME)
                 config.PLAYER_NAME_WAS_EDITED = False
 

@@ -9,3 +9,4 @@ __pycache__/
 .idea/
 .vscode/
 *.dat
+player_credentials*.json

@@ -1,13 +1,15 @@
 import pygame, sys, config, argparse
 from game.stateManager import GameState
 from game_display import GameDisplay
-from player_manager import load_player_id
+from player_manager import load_player_credentials
 from settings_store import load_display_resolution, save_display_resolution
 
-def main(PlayerDataFile="player_data.dat"):
+def main(PlayerDataFile="player_credentials.json"):
     pygame.init()
     config.PLAYER_DATA_FILE = PlayerDataFile
-    config.PLAYER_ID = load_player_id(PlayerDataFile)
+    credentials = load_player_credentials(PlayerDataFile)
+    config.PLAYER_ID = credentials.get("playerId") if credentials else None
+    config.PLAYER_TOKEN = credentials.get("playerToken") if credentials else None
     game_display = GameDisplay(load_display_resolution())
     pygame.display.set_caption("Supa Fighta")
     clock = pygame.time.Clock() 
@@ -45,6 +47,10 @@ def main(PlayerDataFile="player_data.dat"):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Supa Fighta Client")
-    parser.add_argument("--datafile", default="player_data.dat", help="Path to player data file")
+    parser.add_argument(
+        "--datafile",
+        default="player_credentials.json",
+        help="Path to player credentials file",
+    )
     args = parser.parse_args()
     main(args.datafile)

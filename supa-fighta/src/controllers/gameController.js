@@ -3,14 +3,19 @@ const MatchesRepository = require('../repositories/matchesRepository');
 const PlayerState = require('../models/playerState');
 const { Inputs } = require('../enums');
 const WebSocket = require('ws');
+const { sendJson } = require('../utils/websocketUtils');
 const DASH_FACTOR = 2.1
 const MOVE_SPEED = 3;
 const ACCELERATION = 0.45;
 const DECELERATION = 0.65;
-const MAX_FRAME_SPEED = MOVE_SPEED * DASH_FACTOR;
 const POSITION_EPSILON = 2;
 const MATCH_DURATION_SECONDS = 20;
 const INTRO_COUNTDOWN_SECONDS = 3;
+const MAX_QUEUED_INPUTS = 4;
+const ACTION_COOLDOWN_TICKS = {
+    punch: 30,
+    parry: 27
+};
 
 class Game {
     constructor(matchId, player1, player2, onEnd = null) {
@@ -38,6 +43,19 @@ class Game {
             [player1.id]: 200,
             [player2.id]: 200
         };
+        this.lastInputSequence = {
+            [player1.id]: -1,
+            [player2.id]: -1
+        };
+        this.reportedPositions = {
+            [player1.id]: 200,
+            [player2.id]: 200
+        };
+        this.actionAvailableAtTick = {
+            [player1.id]: { punch: 0, parry: 0 },
+            [player2.id]: { punch: 0, parry: 0 }
+        };
+        this.tickNumber = 0;
         this.durationSeconds = MATCH_DURATION_SECONDS;
         this.timer = this.durationSeconds * 60;
         this.winner = null;
@@ -102,10 +120,27 @@ class Game {
     }
 
     receiveInput(playerId, input) {
+        if (this.inputQueue[playerId].length >= MAX_QUEUED_INPUTS) return false;
         this.inputQueue[playerId].push(input);
+        return true;
     }
 
     tick() {
+        this.tickNumber++;
+        [this.player1.id, this.player2.id].forEach(playerId => {
+            if (this.status === 1) return;
+
+            const input = this.inputQueue[playerId].shift();
+            if (input === undefined) return;
+
+            this.processInput(playerId, input);
+            this.publishState(
+                playerId,
+                input,
+                this.inputQueue[playerId].length === 0
+            );
+        });
+
         // Advance timer and check for end
         this.timer--;
         if (this.timer <= 0) {
@@ -121,6 +156,14 @@ class Game {
         let player = this.player1.id === playerId ? this.player1 : this.player2;
         const parryLockKey = `${playerId}:${otherId}`;
         // console.log(`Reversed opponent position for processing:`, otherPos);
+
+        const cooldownTicks = ACTION_COOLDOWN_TICKS[input];
+        if (cooldownTicks) {
+            if (this.tickNumber < this.actionAvailableAtTick[playerId][input]) {
+                return;
+            }
+            this.actionAvailableAtTick[playerId][input] = this.tickNumber + cooldownTicks;
+        }
 
         if (input !== 'punch') {
             this.parryLocks.delete(parryLockKey);
@@ -181,13 +224,8 @@ class Game {
                 this.movePlayer(pos, reversedOtherPos, otherPos);
                 player.state = Inputs.PARRY
                 break;
-            case 'parry-hit':
-            case 'parried':
-                this.movePlayer(pos, reversedOtherPos, otherPos);
-                player.state = input;
-                break;
             default:
-                // console.log("Unknown input:", input);
+                // Result states are decided by the server, never the client.
                 break;
         }
     }
@@ -256,62 +294,47 @@ class Game {
     }
 
     sendToPlayer(player, message) {
-        if (player.ws.readyState !== WebSocket.OPEN) return false;
-
-        try {
-            player.ws.send(JSON.stringify(message));
-            return true;
-        } catch (err) {
-            console.error(`Failed to send match ${this.matchId} message to ${player.id}:`, err);
-            return false;
-        }
+        return sendJson(player.ws, message);
     }
 
     validateState(playerId, snapshot) {
         if (!this.acceptingInput || this.status === 1) return;
 
         const player_state  = snapshot.player;
-        const { history, state} = player_state;
-        let x = player_state.x;
-        const serverPos = this.positions[playerId];
-        const previousAcceptedX = this.lastAcceptedPositions[playerId];
-        history.forEach((input, index) => {
-            if (this.status!=1) {
-                this.processInput(playerId, input); 
-            }
-            
-        })
-        const maxSnapshotTravel = (
-            history.length * MAX_FRAME_SPEED
-        ) + POSITION_EPSILON;
-        const clientTravel = Math.abs(x - previousAcceptedX);
-        const positionInBounds = x >= 0 && x <= 640 - (80 * 2);
+        const { history } = player_state;
+        const sequence = snapshot.sequence;
+        if (
+            !Number.isSafeInteger(sequence)
+            || sequence <= this.lastInputSequence[playerId]
+            || history.length === 0
+            || history.length > MAX_QUEUED_INPUTS
+        ) {
+            return;
+        }
 
-        if (!positionInBounds || clientTravel > maxSnapshotTravel) {
-            console.log(
-                `Invalid movement for player ${playerId}: ` +
-                `travel=${clientTravel}, allowed=${maxSnapshotTravel}`
-            );
+        this.lastInputSequence[playerId] = sequence;
+        this.reportedPositions[playerId] = player_state.x;
+        history.forEach(input => this.receiveInput(playerId, input));
+    }
+
+    publishState(playerId, input, shouldCorrect) {
+        const clientX = this.reportedPositions[playerId];
+        const serverPos = this.positions[playerId];
+        this.lastAcceptedPositions[playerId] = serverPos.x;
+
+        if (shouldCorrect && Math.abs(clientX - serverPos.x) > POSITION_EPSILON) {
             const target = playerId === this.player1.id ? this.player1 : this.player2;
             this.sendToPlayer(target, {
                 type: 'correction',
-                position: previousAcceptedX
+                position: serverPos.x
             });
-            serverPos.x = previousAcceptedX;
-        } else {
-            // Input labels are still processed for combat and state, but the
-            // validated client position is the reconciliation point. Trying
-            // to reproduce client acceleration from 30 Hz snapshots creates
-            // frame-order drift and visible correction loops.
-            serverPos.x = x;
-            this.lastAcceptedPositions[playerId] = x;
         }
         // console.log(`Validating state for player ${playerId}: Client Pos (x=${x}, y=${y}) vs Server Pos (x=${serverPos.x}, y=${serverPos.y})`);
 
         // send response to opponent
         let pos = this.reversePosition(serverPos);
         let player = this.player1.id === playerId ? this.player1 : this.player2;
-        let op_state = this.reverseState(player.state || history[history.length - 1]);
+        let op_state = this.reverseState(player.state || input);
         let message = {
             type: 'opponent_update',
             position: pos,

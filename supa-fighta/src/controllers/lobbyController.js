@@ -67,8 +67,12 @@ const HandleMessage = async (ws, data) => {
                 sendInvalidCredentials(ws);
                 return
             }
-            if (LOBBY.players.some(p => p.id === playerId)) {
-                throw Error("Player already in lobby");
+            const existingPlayer = LOBBY.players.find(p => p.id === playerId);
+            if (existingPlayer && existingPlayer.ws !== ws) {
+                // A freshly authenticated connection replaces a socket whose
+                // close event may still be in flight.
+                existingPlayer.ws.terminate();
+                await HandleClose(existingPlayer.ws);
             }
             if (ws.readyState !== WebSocket.OPEN) return;
 
@@ -154,9 +158,10 @@ const HandleMessage = async (ws, data) => {
 };
 
 const HandleClose = async (ws) => {
-    const player = LOBBY.players.find(p => p.id === ws.id);
+    // Match the socket, not just the public player ID. A delayed close event
+    // from a replaced connection must not remove the new connection.
+    const player = LOBBY.players.find(p => p.ws === ws);
     if (!player) {
-        console.warn(`Player with ID ${ws.id} not found in the lobby.`);
         return;
     }
 
@@ -167,16 +172,16 @@ const HandleClose = async (ws) => {
 
     // Remove first so matchmaking cannot select a disconnected player while
     // database work is still pending.
-    LOBBY.players = LOBBY.players.filter(p => p.id !== ws.id);
+    LOBBY.players = LOBBY.players.filter(p => p.ws !== ws);
     console.log(`Current lobby players:`, LOBBY.players.map(p => p.id));
-    broadcastToLobby(LOBBY, { type: 'player_left', playerId: ws.id });
+    broadcastToLobby(LOBBY, { type: 'player_left', playerId: player.id });
 
-    await gameManager.handleDisconnect(ws.id);
+    await gameManager.handleDisconnect(player.id);
 
     try {
         await playerRepository.updatePlayerStats(player);
     } catch (err) {
-        console.error(`Failed to update player stats for ${ws.id}:`, err);
+        console.error(`Failed to update player stats for ${player.id}:`, err);
     }
 };
 

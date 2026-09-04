@@ -6,6 +6,12 @@ const PlayerRepository = require('../repositories/playerRepository')
 const MatchesRepository = require('../repositories/matchesRepository')
 const gameManager = require('./gameManager');
 const { validatePlayerName } = require('../utils/playerNameUtils');
+const { sendJson } = require('../utils/websocketUtils');
+const {
+    authenticatePlayer,
+    createPlayerToken,
+    hashPlayerToken
+} = require('../utils/playerAuth');
 
 const LOBBY = { players: [] };
 const playerRepository = new PlayerRepository(pool)
@@ -13,8 +19,11 @@ const matchesRepository = new MatchesRepository(pool)
 let matchmakingInProgress = false;
 
 const sendNameRejected = (ws, message) => {
-    if (ws.readyState !== WebSocket.OPEN) return;
-    ws.send(JSON.stringify({ type: 'name_rejected', message }));
+    sendJson(ws, { type: 'name_rejected', message });
+};
+
+const sendInvalidCredentials = (ws) => {
+    sendJson(ws, { type: 'validation_result', valid: false });
 };
 
 const validateRequestedName = (ws, username) => {
@@ -30,10 +39,10 @@ const validateRequestedName = (ws, username) => {
 const beginRegistration = (ws) => {
     if (ws.playerRegistered || ws.registrationInProgress) {
         if (ws.readyState === WebSocket.OPEN) {
-            ws.send(JSON.stringify({
+            sendJson(ws, {
                 type: 'error',
                 message: 'This connection already has a player.'
-            }));
+            });
         }
         return false;
     }
@@ -43,15 +52,19 @@ const beginRegistration = (ws) => {
 };
 
 const HandleMessage = async (ws, data) => {
-    const { type, playerId, username } = data;
+    const { type, playerId, playerToken, username } = data;
 
     if (type === "validate_player") {
         if (!beginRegistration(ws)) return;
 
         try {
-            const player_exists = await playerRepository.getPlayerById(playerId)
-            if (player_exists.rows.length === 0) {
-                ws.send(JSON.stringify({ type: 'validation_result', valid: false }));
+            const playerRecord = await authenticatePlayer(
+                playerRepository,
+                playerId,
+                playerToken
+            );
+            if (!playerRecord) {
+                sendInvalidCredentials(ws);
                 return
             }
             if (LOBBY.players.some(p => p.id === playerId)) {
@@ -59,7 +72,7 @@ const HandleMessage = async (ws, data) => {
             }
             if (ws.readyState !== WebSocket.OPEN) return;
 
-            const savedPlayerName = player_exists.rows[0].player_name;
+            const savedPlayerName = playerRecord.player_name;
             const requestedPlayerName = typeof username === 'string'
                 ? username
                 : savedPlayerName;
@@ -82,12 +95,12 @@ const HandleMessage = async (ws, data) => {
             player.id = playerId;
             LOBBY.players.push(player);
             ws.playerRegistered = true;
-            ws.send(JSON.stringify({
+            sendJson(ws, {
                 type: 'validation_result',
                 valid: true,
                 playerId,
                 username: player.username
-            }));
+            });
             broadcastToLobby(LOBBY, { type: 'player_joined', playerId: player.id });
         } finally {
             ws.registrationInProgress = false;
@@ -97,20 +110,33 @@ const HandleMessage = async (ws, data) => {
         if (!beginRegistration(ws)) return;
 
         try {
+            if (ws.allowPlayerCreation && !ws.allowPlayerCreation()) {
+                sendJson(ws, {
+                    type: 'error',
+                    message: 'Player creation limit reached. Try again later.'
+                });
+                return;
+            }
+
             const validatedName = validateRequestedName(ws, username);
             if (!validatedName) return;
 
             const player = new Player(ws, validatedName.name);
-            await playerRepository.addNewPlayer(player)
+            const playerToken = createPlayerToken();
+            await playerRepository.addNewPlayer(
+                player,
+                hashPlayerToken(playerToken)
+            )
             if (ws.readyState !== WebSocket.OPEN) return;
 
             LOBBY.players.push(player);
             ws.playerRegistered = true;
-            ws.send(JSON.stringify({
+            sendJson(ws, {
                 type: 'player_created',
                 playerId: player.id,
+                playerToken,
                 username: player.username
-            }));
+            });
             broadcastToLobby(LOBBY, { type: 'player_joined', playerId: player.id });
         } finally {
             ws.registrationInProgress = false;
@@ -123,7 +149,7 @@ const HandleMessage = async (ws, data) => {
         player.status = 0;
         player.match_id = null;
     } else {
-        ws.send(JSON.stringify({ type: 'error', message: 'Unknown message type.' }));
+        sendJson(ws, { type: 'error', message: 'Unknown message type.' });
     }
 };
 

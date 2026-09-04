@@ -2,69 +2,57 @@ const WebSocket = require('ws');
 const crypto = require('crypto');
 const gameManager = require('./controllers/gameManager');
 const { HandleMessage, HandleClose, MatchmakePlayers, LOBBY } = require('./controllers/lobbyController');
+const { sendJson } = require('./utils/websocketUtils');
+const {
+  WebSocketSecurity,
+  getClientIp,
+  validateSnapshot
+} = require('./utils/websocketSecurity');
 
-const VALID_INPUTS = new Set([
-  'idle',
-  'walk_left',
-  'walk_right',
-  'dash_left',
-  'dash_right',
-  'punch',
-  'parry',
-  'parry-hit',
-  'parried',
-  'hurt',
-  'win',
-  'wait'
-]);
-
-const safeSend = (ws, message) => {
-  if (ws.readyState !== WebSocket.OPEN) return;
-
-  try {
-    ws.send(JSON.stringify(message));
-  } catch (err) {
-    console.error(`Failed to send message to player ${ws.id}:`, err);
-  }
-};
-
-const validateSnapshot = (snapshot) => {
-  const player = snapshot?.player;
-
-  if (!player || !Number.isFinite(player.x) || !Array.isArray(player.history)) {
-    return false;
-  }
-
-  if (player.history.length > 120) {
-    return false;
-  }
-
-  return player.history.every(input => VALID_INPUTS.has(input));
-};
+const REGISTRATION_DEADLINE_MS = 10 * 1000;
 
 const setupWebSocketServer = (port) => {
   const wss = new WebSocket.Server({ port, maxPayload: 64 * 1024 });
+  const security = new WebSocketSecurity();
 
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, request) => {
+    const clientIp = getClientIp(request);
+    if (!security.openConnection(clientIp)) {
+      ws.terminate();
+      return;
+    }
+
     ws.id = crypto.randomUUID();
     ws.isAlive = true;
+    ws.clientIp = clientIp;
+    ws.allowPlayerCreation = () => security.allowPlayerCreation(clientIp);
+    ws.registrationTimer = setTimeout(() => {
+      if (!ws.playerRegistered) {
+        ws.terminate();
+      }
+    }, REGISTRATION_DEADLINE_MS);
 
     ws.on('pong', () => {
       ws.isAlive = true;
     });
 
     ws.on('message', async (message) => {
+      if (!security.allowMessage(ws)) {
+        ws.terminate();
+        return;
+      }
+
       try {
         const data = JSON.parse(message.toString());
 
         if (!data || typeof data !== 'object' || Array.isArray(data)) {
-          safeSend(ws, { type: 'error', message: 'Invalid message format.' });
+          sendJson(ws, { type: 'error', message: 'Invalid message format.' });
           return;
         }
 
         if (data.type === 'snapshot') {
           if (!validateSnapshot(data.snapshot)) {
-            safeSend(ws, { type: 'error', message: 'Invalid snapshot.' });
+            sendJson(ws, { type: 'error', message: 'Invalid snapshot.' });
             return;
           }
 
@@ -76,11 +64,13 @@ const setupWebSocketServer = (port) => {
         await HandleMessage(ws, data);
       } catch (err) {
         console.error(`Error handling message from player ${ws.id}:`, err);
-        safeSend(ws, { type: 'error', message: 'Invalid message.' });
+        sendJson(ws, { type: 'error', message: 'Invalid message.' });
       }
     });
 
     ws.on('close', async (code, reason) => {
+      clearTimeout(ws.registrationTimer);
+      security.closeConnection(clientIp);
       console.log(`WebSocket closed for player ${ws.id}. Code: ${code}, Reason: ${reason}`);
       try {
         await HandleClose(ws);

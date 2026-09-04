@@ -1,5 +1,5 @@
 # multi-stage Dockerfile for a Node.js server (adjust scripts/paths as needed)
-FROM node:18-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 # install dependencies based on lockfile if present
 COPY package*.json ./
@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 RUN npm run build --if-present
 
-FROM node:18-alpine AS runtime
+FROM node:24-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 # copy only what's needed for runtime

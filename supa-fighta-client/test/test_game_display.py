@@ -124,7 +124,7 @@ class ResolutionSettingsTests(unittest.TestCase):
         self.assertEqual(submenu.PRESET_FONT_SIZE, 16)
         self.assertEqual(submenu.selected_button.font_color, (92, 45, 28))
         self.assertEqual(submenu.TITLE_FONT_SIZE, 40)
-        self.assertEqual(submenu.TITLE_CENTER_Y_OFFSET, 34)
+        self.assertEqual(submenu.TITLE_CENTER_Y_OFFSET, 36)
         self.assertEqual(
             [
                 submenu.buttons[index + 1].rect.y

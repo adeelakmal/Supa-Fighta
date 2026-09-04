@@ -93,7 +93,7 @@ We're open to contributions! We especially welcome help with:
 
 - **Report Issues**: Use the [Issues](https://github.com/adeelakmal/Supa-Fighta/issues) section to report bugs or suggest features
 - **Submit Pull Requests**: Feel free to fork the repository and submit pull requests with improvements
-- **Get in Touch**: Reach out to us directly if you'd like to collaborate on specific aspects
+- **Get in Touch**: Reach out to us at [supafighta.dev@gmail.com](mailto:supafighta.dev@gmail.com) if you'd like to collaborate on specific aspects
 
 ## Project Status
 

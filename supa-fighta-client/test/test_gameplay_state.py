@@ -108,6 +108,19 @@ def make_gameplay_state():
 
 
 class GameplayStateTests(unittest.TestCase):
+    def test_snapshots_have_monotonic_sequence_numbers(self):
+        state = make_gameplay_state()
+        state._snapshot_sequence = 0
+        state.player.player_x = 200
+        state.player.player_y = 220
+        state.player._inputs = ["idle"]
+
+        first = state._create_state_snapshot()
+        second = state._create_state_snapshot()
+
+        self.assertEqual(first["sequence"], 0)
+        self.assertEqual(second["sequence"], 1)
+
     def test_match_timer_uses_deadline_and_clamps_at_zero(self):
         state = make_gameplay_state()
 

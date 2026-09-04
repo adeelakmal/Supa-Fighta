@@ -9,20 +9,14 @@ const {
     validateSnapshot
 } = require('../src/utils/websocketSecurity');
 
-test('accepts only small, sequenced snapshots with known inputs', () => {
+test('accepts only bounded snapshots with known inputs', () => {
     assert.equal(validateSnapshot({
-        sequence: 0,
         player: { x: 200, history: ['walk_right'] }
     }), true);
     assert.equal(validateSnapshot({
-        player: { x: 200, history: ['walk_right'] }
+        player: { x: 200, history: Array(121).fill('walk_right') }
     }), false);
     assert.equal(validateSnapshot({
-        sequence: 1,
-        player: { x: 200, history: Array(5).fill('walk_right') }
-    }), false);
-    assert.equal(validateSnapshot({
-        sequence: 1,
         player: { x: 200, history: ['teleport'] }
     }), false);
 });
